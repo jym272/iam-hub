@@ -1,2 +1,16 @@
-.idea
+# IDE
+.vscode/
+.idea/
+
 node_modules
+
+# Pulumi
+.pulumi/
+Pulumi.*.yaml
+
+# Environment files
+.env.*
+.env
+
+# Lambda artifacts
+lambda-src/node_modules/
