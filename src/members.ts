@@ -16,34 +16,34 @@ interface TeamMemberWithBudget {
 
 // Define team with budget controls
 export const teamMembersWithBudgets: TeamMemberWithBudget[] = [
-  {
-    username: "jorge-clavijo",
-    services: ["s3", "ecs", "rds", "lambda", "ec2"],
-    monthlyBudgetUSD: 1000, // $1000/month
-    environment: "production",
-    needsConsoleAccess: true,
-    needsAccessKey: true,
-    costCenter: "engineering",
-    budgetAlerts: {
-      warningThreshold: 80,
-      criticalThreshold: 100,
-      emails: ["jorge@company.com", "admin@company.com"]
-    }
-  },
-  {
-    username: "luciano-carrera",
-    services: ["ecs", "s3"],
-    monthlyBudgetUSD: 300, // $300/month - limited budget for dev
-    environment: "development",
-    needsConsoleAccess: true,
-    needsAccessKey: false,
-    costCenter: "development",
-    budgetAlerts: {
-      warningThreshold: 75,
-      criticalThreshold: 90,
-      emails: ["luciano@company.com", "admin@company.com"]
-    }
-  },
+  // {
+  //   username: "jorge-clavijo",
+  //   services: ["s3", "ecs", "rds", "lambda", "ec2"],
+  //   monthlyBudgetUSD: 1000, // $1000/month
+  //   environment: "production",
+  //   needsConsoleAccess: true,
+  //   needsAccessKey: true,
+  //   costCenter: "engineering",
+  //   budgetAlerts: {
+  //     warningThreshold: 80,
+  //     criticalThreshold: 100,
+  //     emails: ["jorge@company.com", "admin@company.com"]
+  //   }
+  // },
+  // {
+  //   username: "luciano-carrera",
+  //   services: ["ecs", "s3"],
+  //   monthlyBudgetUSD: 300, // $300/month - limited budget for dev
+  //   environment: "development",
+  //   needsConsoleAccess: true,
+  //   needsAccessKey: false,
+  //   costCenter: "development",
+  //   budgetAlerts: {
+  //     warningThreshold: 75,
+  //     criticalThreshold: 90,
+  //     emails: ["luciano@company.com", "admin@company.com"]
+  //   }
+  // },
   {
     username: "maria-gonzalez",
     services: ["lambda", "s3"],
@@ -55,7 +55,7 @@ export const teamMembersWithBudgets: TeamMemberWithBudget[] = [
     budgetAlerts: {
       warningThreshold: 85,
       criticalThreshold: 100,
-      emails: ["maria@company.com"]
+      emails: ["jym272@gmail.com"]
     }
   }
 ];
