@@ -7,6 +7,7 @@
 - migrar todo a un repo de gm2dev
 - lint para yaml files!
 - TESTEAR, como agregar awereness de los recursos gratuitos de aws?
+- Añadir tags a todo
 
 
 ---

@@ -22,9 +22,11 @@ export const costTrackingTags = {
 
 // export const dashboardUrl = pulumi.interpolate`https://console.aws.amazon.com/cloudwatch/home?region=us-east-1#dashboards:name=${costDashboard.dashboardName}`;
 
+console.table({
+  ...budgetSummary
+})
 
 console.table({
-  // budgetSummary,
   totalTeamBudget,
   // costTrackingTags,
   // dashboardUrl,
