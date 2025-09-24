@@ -13,7 +13,8 @@
 
 CRITICS:
 
-Se necesita habilitar Budgets
+Habilitar Identity Center en la org?
+Se necesita habilitar "Budgets", se tiene que tener instrucciones primero
 ```text
 Diagnostics:
   aws:budgets:Budget (budget-maria-gonzalez):
