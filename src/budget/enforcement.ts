@@ -1,9 +1,8 @@
 import * as aws from "@pulumi/aws";
 import * as pulumi from "@pulumi/pulumi";
 
-
 // Create SNS topic for budget alerts
-const budgetAlertsTopic = new aws.sns.Topic("budget-alerts", {
+export const budgetAlertsTopic = new aws.sns.Topic("budget-alerts", {
   name: "budget-alerts-topic"
 });
 
@@ -43,7 +42,7 @@ const budgetEnforcementRole = new aws.iam.Role("budget-enforcement-role", {
 
 
 const budgetEnforcementFunction = new aws.lambda.Function("budget-enforcement", {
-  runtime: aws.lambda.Runtime.NodeJS18dX,
+  runtime: aws.lambda.Runtime.NodeJS20dX,
   code: new pulumi.asset.AssetArchive({
     ".": new pulumi.asset.FileArchive("./lambda-src")
   }),
@@ -55,3 +54,21 @@ const budgetEnforcementFunction = new aws.lambda.Function("budget-enforcement", 
     }
   }
 });
+
+// Create SNS subscription to trigger Lambda
+const snsSubscription = new aws.sns.TopicSubscription("budget-alerts-subscription", {
+  topic: budgetAlertsTopic.arn,
+  protocol: "lambda",
+  endpoint: budgetEnforcementFunction.arn
+});
+
+// Allow SNS to invoke the Lambda function
+const lambdaPermission = new aws.lambda.Permission("sns-invoke-lambda", {
+  statementId: "AllowSNSInvoke",
+  action: "lambda:InvokeFunction",
+  function: budgetEnforcementFunction.name,
+  principal: "sns.amazonaws.com",
+  sourceArn: budgetAlertsTopic.arn
+});
+
+export const budgetEnforcementLambda = budgetEnforcementFunction;

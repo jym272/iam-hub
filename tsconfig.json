@@ -30,7 +30,7 @@
   },
   "include": ["src/**/*"],
   "exclude": ["node_modules", "dist"],
-  // Add this section:
+  // TODO: testear borrar esto y "tsconfig-paths": "^4.2.0", rompe todo?
   "ts-node": {
     "require": ["tsconfig-paths/register"]
   }

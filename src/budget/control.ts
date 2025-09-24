@@ -1,6 +1,8 @@
 import * as aws from "@pulumi/aws";
 import {teamMembersWithBudgets} from "../members.ts";
 import {createCombinedPolicy, createCostTrackingPolicy, createResourceLimitsPolicy} from "../policies/index.ts";
+import {ADMIN_EMAILS, BUDGET_START_DATE, FORECASTED_THRESHOLD} from "../constants.ts";
+import {budgetAlertsTopic} from "./enforcement.ts";
 
 
 // Create resources for each team member with budget controls
@@ -44,12 +46,12 @@ export const teamResourcesWithBudgets = teamMembersWithBudgets.map(member => {
     limitAmount: member.monthlyBudgetUSD.toString(),
     limitUnit: "USD",
     timeUnit: "MONTHLY",
-    timePeriodStart: "2025-01-01_00:00",
+    timePeriodStart: BUDGET_START_DATE,
 
     // Filter by cost allocation tags to track this user's spending
     costFilters: [{
       name: "Tag",
-      values: [`CreatedBy$${member.username}`]
+      values: [`CreatedBy:${member.username}`]
     }],
 
     // Budget alerts
@@ -59,21 +61,24 @@ export const teamResourcesWithBudgets = teamMembersWithBudgets.map(member => {
         threshold: member.budgetAlerts.warningThreshold,
         thresholdType: "PERCENTAGE",
         notificationType: "ACTUAL",
-        subscriberEmailAddresses: member.budgetAlerts.emails
+        subscriberEmailAddresses: member.budgetAlerts.emails,
+        subscriberSnsTopicArns: [budgetAlertsTopic.arn]
       },
       {
         comparisonOperator: "GREATER_THAN",
         threshold: member.budgetAlerts.criticalThreshold,
         thresholdType: "PERCENTAGE",
         notificationType: "ACTUAL",
-        subscriberEmailAddresses: member.budgetAlerts.emails
+        subscriberEmailAddresses: member.budgetAlerts.emails,
+        subscriberSnsTopicArns: [budgetAlertsTopic.arn]
       },
       {
         comparisonOperator: "GREATER_THAN",
-        threshold: 100, // Forecasted to exceed budget
+        threshold: FORECASTED_THRESHOLD, // Forecasted to exceed budget
         thresholdType: "PERCENTAGE",
         notificationType: "FORECASTED",
-        subscriberEmailAddresses: member.budgetAlerts.emails
+        subscriberEmailAddresses: member.budgetAlerts.emails,
+        subscriberSnsTopicArns: [budgetAlertsTopic.arn]
       }
     ] : []
   });
@@ -104,11 +109,11 @@ const teamBudget = new aws.budgets.Budget("team-total-budget", {
   limitAmount: teamMembersWithBudgets.reduce((sum, member) => sum + member.monthlyBudgetUSD, 0).toString(),
   limitUnit: "USD",
   timeUnit: "MONTHLY",
-  timePeriodStart: "2025-01-01_00:00",
+  timePeriodStart: BUDGET_START_DATE,
 
   costFilters: [{
     name: "Tag",
-    values: ["BudgetTracking$enabled"]
+    values: ["BudgetTracking:enabled"]
   }],
 
   notifications: [
@@ -117,7 +122,8 @@ const teamBudget = new aws.budgets.Budget("team-total-budget", {
       threshold: 85,
       thresholdType: "PERCENTAGE",
       notificationType: "ACTUAL",
-      subscriberEmailAddresses: ["admin@company.com", "finance@company.com"]
+      subscriberEmailAddresses: ADMIN_EMAILS,
+      subscriberSnsTopicArns: [budgetAlertsTopic.arn]
     }
   ]
 });

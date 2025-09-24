@@ -1,0 +1,10 @@
+{
+  "name": "budget-enforcement-lambda",
+  "version": "1.0.0",
+  "description": "Lambda function for budget enforcement",
+  "main": "index.js",
+  "dependencies": {
+    "@aws-sdk/client-sns": "^3.682.0",
+    "@aws-sdk/client-iam": "^3.682.0"
+  }
+}
