@@ -4,6 +4,19 @@ import {createCombinedPolicy, createCostTrackingPolicy, createResourceLimitsPoli
 import {ADMIN_EMAILS, BUDGET_START_DATE, FORECASTED_THRESHOLD} from "../constants.ts";
 import {budgetAlertsTopic} from "./enforcement.ts";
 
+// Create account password policy for user-friendly passwords
+export const accountPasswordPolicy = new aws.iam.AccountPasswordPolicy("account-password-policy", {
+  minimumPasswordLength: 8,
+  requireLowercaseCharacters: true,
+  requireNumbers: true,
+  requireUppercaseCharacters: true,
+  requireSymbols: false, // Make it easier for users
+  allowUsersToChangePassword: true,
+  maxPasswordAge: 90, // 90 days
+  passwordReusePrevention: 3,
+  hardExpiry: false
+});
+
 
 // Create resources for each team member with budget controls
 export const teamResourcesWithBudgets = teamMembersWithBudgets.map(member => {
