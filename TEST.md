@@ -1,3 +1,2 @@
-## Que se testeó
-
-La región funciona bien!
+## Que hay que testear
+Las policies.
