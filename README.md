@@ -67,6 +67,8 @@ PULUMI_CONFIG_PASSPHRASE=gm2dev pulumi up
 
 # Get user credentials (access keys and secrets)
 PULUMI_CONFIG_PASSPHRASE=gm2dev pulumi stack output userCredentials --show-secrets --json
+
+# Get console access (temporary passwords for AWS console login)
 PULUMI_CONFIG_PASSPHRASE=gm2dev pulumi stack output consoleAccess --show-secrets --json
 # Get all stack outputs
 PULUMI_CONFIG_PASSPHRASE=gm2dev pulumi stack output --json
@@ -75,4 +77,17 @@ PULUMI_CONFIG_PASSPHRASE=gm2dev pulumi stack output --json
 pulumi destroy
 # destroy stack
 pulumi stack rm dev
-``` 
+```
+
+### Password Policy
+The infrastructure creates an account password policy with the following requirements:
+- Minimum 8 characters
+- Must contain uppercase letters
+- Must contain lowercase letters
+- Must contain numbers
+- Special characters are NOT required (user-friendly)
+- Users can change their own passwords
+- Password expires after 90 days
+- Cannot reuse last 3 passwords
+
+When changing from temporary password, use something like: `MyPassword123` 

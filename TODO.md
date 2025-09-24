@@ -29,3 +29,5 @@ Diagnostics:
         * creating Budget (team-total-budget): operation error Budgets: CreateBudget, https response error StatusCode: 400, RequestID: 88498e8a-e9d9-4343-a466-0d6cac5c810a, AccessDeniedException: Account 309237749333 is a linked account. To enable budgets for your account, ask the payer account to enable budgets first.
 
 ```
+
+- Error en las policies de recursos -> reparar
