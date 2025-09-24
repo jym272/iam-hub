@@ -4,6 +4,10 @@ To install dependencies:
 
 ```bash
 bun install
+# install pulumi
+brew install pulumi
+# usar mise.toml -> correcto contexto de aws
+brew install mise
 ```
 
 To run:
