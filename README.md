@@ -58,8 +58,19 @@ aws s3 mb s3://gm2dev-pulumi-state
 pulumi login s3://gm2dev-pulumi-state
 # Inicializar stack, se usa passphrase "gm2dev" -> TODO: mejorar esto, es secreto de secretos!
 pulumi stack init dev
+
+# Type check
+bun run type-check
+
 # Deploy
-pulumi up
+PULUMI_CONFIG_PASSPHRASE=gm2dev pulumi up
+
+# Get user credentials (access keys and secrets)
+PULUMI_CONFIG_PASSPHRASE=gm2dev pulumi stack output userCredentials --show-secrets --json
+
+# Get all stack outputs
+PULUMI_CONFIG_PASSPHRASE=gm2dev pulumi stack output --json
+
 # Destroy
 pulumi destroy
 # destroy stack

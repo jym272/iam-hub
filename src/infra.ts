@@ -11,6 +11,14 @@ export const budgetSummary = teamResourcesWithBudgets.map(({ /*userBudget,*/ mem
   services: memberConfig.services
 }));
 
+export const userCredentials = teamResourcesWithBudgets
+  .filter(({ accessKey }) => accessKey)
+  .map(({ accessKey, memberConfig }) => ({
+    username: memberConfig.username,
+    accessKeyId: accessKey!.id,
+    secretAccessKey: accessKey!.secret
+  }));
+
 export const totalTeamBudget = teamMembersWithBudgets.reduce((sum, member) => sum + member.monthlyBudgetUSD, 0);
 
 
