@@ -1,7 +1,7 @@
 name: team-budget-control
 runtime: nodejs
 description: Team IAM management with individual budget controls and enforcement
-main: ./src/index.ts
+main: ./src/infra.ts
 
 config:
   aws:region: sa-east-1

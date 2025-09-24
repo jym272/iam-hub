@@ -13,6 +13,7 @@ interface PolicyDocument {
 
 
 export const servicePermissions: Record<string, PolicyDocument> = {
+  // TODO: hardcoded "services" key for now, it should be dynamic!
   s3: {
     Version: "2012-10-17",
     Statement: [

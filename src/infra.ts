@@ -1,7 +1,7 @@
 // "The hardest choices require the strongest wills."
 
 import {teamResourcesWithBudgets} from "@/budget";
-import {teamMembersWithBudgets} from "@/members.ts";
+import {teamMembersWithBudgets} from "@/members";
 
 export const budgetSummary = teamResourcesWithBudgets.map(({ userBudget, memberConfig }) => ({
   username: memberConfig.username,
