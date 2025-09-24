@@ -19,6 +19,16 @@ export const userCredentials = teamResourcesWithBudgets
     secretAccessKey: accessKey!.secret
   }));
 
+export const consoleAccess = teamResourcesWithBudgets
+  .filter(({ loginProfile }) => loginProfile)
+  .map(({ loginProfile, memberConfig }) => ({
+    username: memberConfig.username,
+    temporaryPassword: loginProfile!.password,
+    passwordResetRequired: true,
+    // TODO: hardcoded, fix later
+    consoleLoginUrl: "https://309237749333.signin.aws.amazon.com/console"
+  }));
+
 export const totalTeamBudget = teamMembersWithBudgets.reduce((sum, member) => sum + member.monthlyBudgetUSD, 0);
 
 

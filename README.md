@@ -67,7 +67,7 @@ PULUMI_CONFIG_PASSPHRASE=gm2dev pulumi up
 
 # Get user credentials (access keys and secrets)
 PULUMI_CONFIG_PASSPHRASE=gm2dev pulumi stack output userCredentials --show-secrets --json
-
+PULUMI_CONFIG_PASSPHRASE=gm2dev pulumi stack output consoleAccess --show-secrets --json
 # Get all stack outputs
 PULUMI_CONFIG_PASSPHRASE=gm2dev pulumi stack output --json
 

@@ -91,6 +91,15 @@ export const teamResourcesWithBudgets = teamMembersWithBudgets.map(member => {
     });
   }
 
+  // Create login profile for console access if needed
+  let loginProfile;
+  if (member.needsConsoleAccess) {
+    loginProfile = new aws.iam.UserLoginProfile(`login-profile-${member.username}`, {
+      user: user.name,
+      passwordResetRequired: true
+    });
+  }
+
   return {
     user,
     // userBudget,
@@ -98,6 +107,7 @@ export const teamResourcesWithBudgets = teamMembersWithBudgets.map(member => {
     costTrackingPolicy,
     resourceLimitsPolicy,
     accessKey,
+    loginProfile,
     memberConfig: member
   };
 });
