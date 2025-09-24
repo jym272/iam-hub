@@ -1,0 +1,2 @@
+- Realmente necesitamos identity center management?
+- CI/CD -> for sure! -> GH ACTIONS.

@@ -14,3 +14,14 @@ Pulumi.*.yaml
 
 # Lambda artifacts
 lambda-src/node_modules/
+
+# OS
+.DS_Store
+Thumbs.db
+
+# TypeScript
+dist/
+*.tsbuildinfo
+
+# Logs
+*.log

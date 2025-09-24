@@ -10,10 +10,46 @@ brew install pulumi
 brew install mise
 ```
 
-To run:
 
-```bash
-bun run index.ts
+### Recursos creados a "mano"
+
+Cuenta admin para `jorge.clavijo@gm2dev.com`
+```shell
+aws iam create-user --user-name jorge-clavijo
+
+{
+    "User": {
+        "Path": "/",
+        "UserName": "jorge-clavijo",
+        "UserId": "AIDAUQAABSZKQJRJ2YOCD",
+        "Arn": "arn:aws:iam::309237749333:user/jorge-clavijo",
+        "CreateDate": "2025-09-23T23:16:42+00:00"
+    }
+}
+
+
+aws iam attach-user-policy --user-name jorge-clavijo --policy-arn arn:aws:iam::aws:policy/AdministratorAccess
+{
+    "AccessKey": {
+        "UserName": "jorge-clavijo",
+        "AccessKeyId": "AKIAXXXXXXXXXXXXXXXX",
+        "Status": "Active",
+        "SecretAccessKey": "ztJbToXXXXXXXXXXXXXXXXX",
+        "CreateDate": "2025-09-23T23:21:36+00:00"
+    }
+}
 ```
 
-This project was created using `bun init` in bun v1.2.22. [Bun](https://bun.com) is a fast all-in-one JavaScript runtime.
+State de pulumi 
+
+```shell
+# Se revisa que la config de default cree un bucket no público.
+aws s3 mb s3://gm2dev-pulumi-state
+```
+
+### Pulumi
+
+```shell
+# Inicializar proyecto
+pulumi login s3://gm2dev-pulumi-state
+``` 
