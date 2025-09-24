@@ -1,6 +1,6 @@
 import * as aws from "@pulumi/aws";
-import {teamMembersWithBudgets} from "@/members.ts";
-import {createCombinedPolicy, createCostTrackingPolicy, createResourceLimitsPolicy} from "@/policies";
+import {teamMembersWithBudgets} from "../members";
+import {createCombinedPolicy, createCostTrackingPolicy, createResourceLimitsPolicy} from "../policies";
 
 
 // Create resources for each team member with budget controls

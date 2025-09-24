@@ -1,6 +1,6 @@
 
 import * as aws from "@pulumi/aws";
-import {teamMembersWithBudgets} from "@/members.ts";
+import {teamMembersWithBudgets} from "./members";
 // CloudWatch dashboard for cost monitoring
 export const costDashboard = new aws.cloudwatch.Dashboard("team-cost-dashboard", {
   dashboardName: "team-cost-monitoring",
