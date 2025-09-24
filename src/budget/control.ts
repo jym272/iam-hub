@@ -39,49 +39,49 @@ export const teamResourcesWithBudgets = teamMembersWithBudgets.map(member => {
     policy: createResourceLimitsPolicy(member.username)
   });
 
-  // Create AWS Budget for this user
-  const userBudget = new aws.budgets.Budget(`budget-${member.username}`, {
-    name: `budget-${member.username}`,
-    budgetType: "COST",
-    limitAmount: member.monthlyBudgetUSD.toString(),
-    limitUnit: "USD",
-    timeUnit: "MONTHLY",
-    timePeriodStart: BUDGET_START_DATE,
-
-    // Filter by cost allocation tags to track this user's spending
-    costFilters: [{
-      name: "Tag",
-      values: [`CreatedBy:${member.username}`]
-    }],
-
-    // Budget alerts
-    notifications: member.budgetAlerts ? [
-      {
-        comparisonOperator: "GREATER_THAN",
-        threshold: member.budgetAlerts.warningThreshold,
-        thresholdType: "PERCENTAGE",
-        notificationType: "ACTUAL",
-        subscriberEmailAddresses: member.budgetAlerts.emails,
-        subscriberSnsTopicArns: [budgetAlertsTopic.arn]
-      },
-      {
-        comparisonOperator: "GREATER_THAN",
-        threshold: member.budgetAlerts.criticalThreshold,
-        thresholdType: "PERCENTAGE",
-        notificationType: "ACTUAL",
-        subscriberEmailAddresses: member.budgetAlerts.emails,
-        subscriberSnsTopicArns: [budgetAlertsTopic.arn]
-      },
-      {
-        comparisonOperator: "GREATER_THAN",
-        threshold: FORECASTED_THRESHOLD, // Forecasted to exceed budget
-        thresholdType: "PERCENTAGE",
-        notificationType: "FORECASTED",
-        subscriberEmailAddresses: member.budgetAlerts.emails,
-        subscriberSnsTopicArns: [budgetAlertsTopic.arn]
-      }
-    ] : []
-  });
+  // TODO: activate Budgets later. Create AWS Budget for this user
+  // const userBudget = new aws.budgets.Budget(`budget-${member.username}`, {
+  //   name: `budget-${member.username}`,
+  //   budgetType: "COST",
+  //   limitAmount: member.monthlyBudgetUSD.toString(),
+  //   limitUnit: "USD",
+  //   timeUnit: "MONTHLY",
+  //   timePeriodStart: BUDGET_START_DATE,
+  //
+  //   // Filter by cost allocation tags to track this user's spending
+  //   costFilters: [{
+  //     name: "Tag",
+  //     values: [`CreatedBy:${member.username}`]
+  //   }],
+  //
+  //   // Budget alerts
+  //   notifications: member.budgetAlerts ? [
+  //     {
+  //       comparisonOperator: "GREATER_THAN",
+  //       threshold: member.budgetAlerts.warningThreshold,
+  //       thresholdType: "PERCENTAGE",
+  //       notificationType: "ACTUAL",
+  //       subscriberEmailAddresses: member.budgetAlerts.emails,
+  //       subscriberSnsTopicArns: [budgetAlertsTopic.arn]
+  //     },
+  //     {
+  //       comparisonOperator: "GREATER_THAN",
+  //       threshold: member.budgetAlerts.criticalThreshold,
+  //       thresholdType: "PERCENTAGE",
+  //       notificationType: "ACTUAL",
+  //       subscriberEmailAddresses: member.budgetAlerts.emails,
+  //       subscriberSnsTopicArns: [budgetAlertsTopic.arn]
+  //     },
+  //     {
+  //       comparisonOperator: "GREATER_THAN",
+  //       threshold: FORECASTED_THRESHOLD, // Forecasted to exceed budget
+  //       thresholdType: "PERCENTAGE",
+  //       notificationType: "FORECASTED",
+  //       subscriberEmailAddresses: member.budgetAlerts.emails,
+  //       subscriberSnsTopicArns: [budgetAlertsTopic.arn]
+  //     }
+  //   ] : []
+  // });
 
   // Create access key if needed
   let accessKey;
@@ -93,7 +93,7 @@ export const teamResourcesWithBudgets = teamMembersWithBudgets.map(member => {
 
   return {
     user,
-    userBudget,
+    // userBudget,
     servicePolicy,
     costTrackingPolicy,
     resourceLimitsPolicy,
@@ -102,32 +102,32 @@ export const teamResourcesWithBudgets = teamMembersWithBudgets.map(member => {
   };
 });
 
-// Create a central budget for the entire team
-const teamBudget = new aws.budgets.Budget("team-total-budget", {
-  name: "team-total-budget",
-  budgetType: "COST",
-  limitAmount: teamMembersWithBudgets.reduce((sum, member) => sum + member.monthlyBudgetUSD, 0).toString(),
-  limitUnit: "USD",
-  timeUnit: "MONTHLY",
-  timePeriodStart: BUDGET_START_DATE,
-
-  costFilters: [{
-    name: "Tag",
-    values: ["BudgetTracking:enabled"]
-  }],
-
-  notifications: [
-    {
-      comparisonOperator: "GREATER_THAN",
-      threshold: 85,
-      thresholdType: "PERCENTAGE",
-      notificationType: "ACTUAL",
-      subscriberEmailAddresses: ADMIN_EMAILS,
-      subscriberSnsTopicArns: [budgetAlertsTopic.arn]
-    }
-  ]
-});
-
-
+// TODO: activate budgets later. Create a central budget for the entire team
+// const teamBudget = new aws.budgets.Budget("team-total-budget", {
+//   name: "team-total-budget",
+//   budgetType: "COST",
+//   limitAmount: teamMembersWithBudgets.reduce((sum, member) => sum + member.monthlyBudgetUSD, 0).toString(),
+//   limitUnit: "USD",
+//   timeUnit: "MONTHLY",
+//   timePeriodStart: BUDGET_START_DATE,
+//
+//   costFilters: [{
+//     name: "Tag",
+//     values: ["BudgetTracking:enabled"]
+//   }],
+//
+//   notifications: [
+//     {
+//       comparisonOperator: "GREATER_THAN",
+//       threshold: 85,
+//       thresholdType: "PERCENTAGE",
+//       notificationType: "ACTUAL",
+//       subscriberEmailAddresses: ADMIN_EMAILS,
+//       subscriberSnsTopicArns: [budgetAlertsTopic.arn]
+//     }
+//   ]
+// });
+//
+//
 
 

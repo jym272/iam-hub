@@ -3,10 +3,10 @@
 import {teamResourcesWithBudgets} from "./budget/index.ts";
 import {teamMembersWithBudgets} from "./members.ts";
 
-export const budgetSummary = teamResourcesWithBudgets.map(({ userBudget, memberConfig }) => ({
+export const budgetSummary = teamResourcesWithBudgets.map(({ /*userBudget,*/ memberConfig }) => ({
   username: memberConfig.username,
   monthlyBudget: memberConfig.monthlyBudgetUSD,
-  budgetArn: userBudget.arn,
+  // budgetArn: userBudget.arn,
   costCenter: memberConfig.costCenter,
   services: memberConfig.services
 }));
