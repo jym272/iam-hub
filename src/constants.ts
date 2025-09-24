@@ -17,11 +17,6 @@ export const ALLOWED_RDS_INSTANCES = [
 ];
 export const FORECASTED_THRESHOLD = 100;
 
-// Budget thresholds
-export const DEFAULT_TEAM_BUDGET_THRESHOLD = 85;
-// Required resource tags
-export const REQUIRED_TAGS = ["CreatedBy", "CostCenter", "Environment"];
-export const BUDGET_TRACKING_TAG = "BudgetTracking=enabled";
 
 // Budget time settings
 export const BUDGET_START_DATE = "2025-01-01_00:00";
