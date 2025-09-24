@@ -1,0 +1,13 @@
+name: team-budget-control
+runtime: nodejs
+description: Team IAM management with individual budget controls and enforcement
+
+config:
+  aws:region: sa-east-1
+
+# Optional: Configure default stack settings
+template:
+  config:
+    aws:region:
+      description: The AWS region to deploy resources
+      default: sa-east-1

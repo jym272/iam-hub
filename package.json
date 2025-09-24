@@ -6,6 +6,13 @@
   "devDependencies": {
     "@types/bun": "latest"
   },
+  "scripts": {
+    "setup": "pulumi login s3://gm2dev-pulumi-state",
+    "deploy": "pulumi up",
+    "plan": "pulumi preview",
+    "deploy:safe": "pulumi login s3://gm2dev-pulumi-state && pulumi up",
+    "deploy:like-a-boss": "pulumi login s3://gm2dev-pulumi-state && pulumi up --yes"
+  },
   "peerDependencies": {
     "typescript": "^5"
   },

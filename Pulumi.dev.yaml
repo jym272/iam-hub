@@ -1,0 +1,7 @@
+# Configuration values for the 'dev' stack
+config:
+  aws:region: sa-east-1
+  team-budget-control:bucketPrefix: gm2dev-demo
+  team-budget-control:environment: development
+  team-budget-control:forceDestroy: "true"
+encryptionsalt: v1:hZiTx1PvvYs=:v1:ur3KR8vCzYlIoQBk:6kd9f7OBOl9IYdQcOYQqcrsKTkvVpg==

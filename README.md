@@ -12,8 +12,12 @@ brew install mise
 
 
 ### Recursos creados a "mano"
+*<small>primero la trampa, después el queso</small>*
 
-Cuenta admin para `jorge.clavijo@gm2dev.com`
+- La activación de identity center en la región de us-east-2
+
+- Cuenta **admin** para `jorge.clavijo@gm2dev.com`:
+
 ```shell
 aws iam create-user --user-name jorge-clavijo
 
@@ -43,7 +47,7 @@ aws iam attach-user-policy --user-name jorge-clavijo --policy-arn arn:aws:iam::a
 State de pulumi 
 
 ```shell
-# Se revisa que la config de default cree un bucket no público.
+# Se revisa que la config de default creé un bucket no público.
 aws s3 mb s3://gm2dev-pulumi-state
 ```
 
@@ -52,4 +56,8 @@ aws s3 mb s3://gm2dev-pulumi-state
 ```shell
 # Inicializar proyecto
 pulumi login s3://gm2dev-pulumi-state
+# Inicializar stack, se usa passphrase "gm2dev" -> TODO: mejorar esto, es secreto de secretos!
+pulumi stack init dev
+# Deploy
+pulumi up
 ``` 
