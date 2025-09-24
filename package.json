@@ -11,7 +11,8 @@
     "deploy": "pulumi up",
     "plan": "pulumi preview",
     "deploy:safe": "pulumi login s3://gm2dev-pulumi-state && pulumi up",
-    "deploy:like-a-boss": "pulumi login s3://gm2dev-pulumi-state && pulumi up --yes"
+    "deploy:like-a-boss": "pulumi login s3://gm2dev-pulumi-state && pulumi up --yes",
+    "type-check": "tsc --noEmit --project tsconfig.json"
   },
   "peerDependencies": {
     "typescript": "^5"

@@ -6,7 +6,7 @@ To install dependencies:
 bun install
 # install pulumi
 brew install pulumi
-# usar mise.toml -> correcto contexto de aws
+# KLAVE -> usar mise.toml -> correcto contexto de aws
 brew install mise
 ```
 
@@ -60,4 +60,8 @@ pulumi login s3://gm2dev-pulumi-state
 pulumi stack init dev
 # Deploy
 pulumi up
+# Destroy
+pulumi destroy
+# destroy stack
+pulumi stack rm dev
 ``` 
