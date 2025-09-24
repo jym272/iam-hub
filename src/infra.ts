@@ -1,15 +1,15 @@
 // "The hardest choices require the strongest wills."
 
-// import {teamResourcesWithBudgets} from "./budget";
+import {teamResourcesWithBudgets} from "./budget/index.ts";
 import {teamMembersWithBudgets} from "./members.ts";
 
-// export const budgetSummary = teamResourcesWithBudgets.map(({ userBudget, memberConfig }) => ({
-//   username: memberConfig.username,
-//   monthlyBudget: memberConfig.monthlyBudgetUSD,
-//   budgetArn: userBudget.arn,
-//   costCenter: memberConfig.costCenter,
-//   services: memberConfig.services
-// }));
+export const budgetSummary = teamResourcesWithBudgets.map(({ userBudget, memberConfig }) => ({
+  username: memberConfig.username,
+  monthlyBudget: memberConfig.monthlyBudgetUSD,
+  budgetArn: userBudget.arn,
+  costCenter: memberConfig.costCenter,
+  services: memberConfig.services
+}));
 
 export const totalTeamBudget = teamMembersWithBudgets.reduce((sum, member) => sum + member.monthlyBudgetUSD, 0);
 

@@ -1,2 +1,2 @@
-export * from "./control"
-export * from "./enforcement"
+export * from "./control.ts"
+export * from "./enforcement.ts"
