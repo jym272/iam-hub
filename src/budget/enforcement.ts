@@ -21,8 +21,9 @@ const budgetEnforcementRole = new aws.iam.Role("budget-enforcement-role", {
   managedPolicyArns: [
     "arn:aws:iam::aws:policy/service-role/AWSLambdaBasicExecutionRole"
   ],
-  inlinePolicies: {
-    BudgetEnforcement: JSON.stringify({
+  inlinePolicies: [{
+    name: "BudgetEnforcement",
+    policy: JSON.stringify({
       Version: "2012-10-17",
       Statement: [
         {
@@ -36,7 +37,7 @@ const budgetEnforcementRole = new aws.iam.Role("budget-enforcement-role", {
         }
       ]
     })
-  }
+  }]
 });
 
 

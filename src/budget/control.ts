@@ -47,9 +47,10 @@ export const teamResourcesWithBudgets = teamMembersWithBudgets.map(member => {
     timePeriodStart: "2025-01-01_00:00",
 
     // Filter by cost allocation tags to track this user's spending
-    costFilters: {
-      Tag: [`CreatedBy$${member.username}`]
-    },
+    costFilters: [{
+      name: "Tag",
+      values: [`CreatedBy$${member.username}`]
+    }],
 
     // Budget alerts
     notifications: member.budgetAlerts ? [
@@ -105,9 +106,10 @@ const teamBudget = new aws.budgets.Budget("team-total-budget", {
   timeUnit: "MONTHLY",
   timePeriodStart: "2025-01-01_00:00",
 
-  costFilters: {
-    Tag: ["BudgetTracking$enabled"]
-  },
+  costFilters: [{
+    name: "Tag",
+    values: ["BudgetTracking$enabled"]
+  }],
 
   notifications: [
     {
