@@ -7,7 +7,10 @@ export const budgetAlertsTopic = new aws.sns.Topic("budget-alerts", {
 });
 
 
-// Lambda function for automated budget enforcement
+// TODO: Lambda function for automated budget enforcement - DISABLED FOR NEXT ITERATION
+// See ISSUES.md for details on Lambda deployment issues
+
+/*
 const budgetEnforcementRole = new aws.iam.Role("budget-enforcement-role", {
   assumeRolePolicy: JSON.stringify({
     Version: "2012-10-17",
@@ -44,7 +47,7 @@ const budgetEnforcementRole = new aws.iam.Role("budget-enforcement-role", {
 const budgetEnforcementFunction = new aws.lambda.Function("budget-enforcement", {
   runtime: aws.lambda.Runtime.NodeJS20dX,
   code: new pulumi.asset.AssetArchive({
-    ".": new pulumi.asset.FileArchive("./lambda-src")
+    ".": new pulumi.asset.FileArchive("./src/lambda-src") // FIXED: Correct path
   }),
   handler: "index.handler",
   role: budgetEnforcementRole.arn,
@@ -72,3 +75,4 @@ const lambdaPermission = new aws.lambda.Permission("sns-invoke-lambda", {
 });
 
 export const budgetEnforcementLambda = budgetEnforcementFunction;
+*/
