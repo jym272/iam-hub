@@ -4,7 +4,7 @@
 export const ADMIN_EMAILS = ["jorge.clavijo@gm2dev.com"];
 
 // AWS Regions - restricted for cost control
-export const ALLOWED_REGIONS = ["us-west-2", "us-east-1", "sa-east-1"];
+export const ALLOWED_REGIONS = ["sa-east-1"];
 
 // Instance types allowed (cost control)
 // https://aws.amazon.com/es/ec2/instance-types/
