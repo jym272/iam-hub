@@ -37,18 +37,31 @@ const ec2CostControl = [
       }
     }
   },
+/*    // No estoy seguro que forzar tag sea necesario, de hecho es incómodo.
+    // "ec2:CreateTags" es necesario para crear tags ens las instancias, no se puede asumir que existe otra policie que permita esto
+  {
+    Effect: "Allow",
+    Action: "ec2:CreateTags",
+    Resource: "arn:aws:ec2:*:*:instance/!*",
+    Condition: {
+      "StringEquals": {
+        "ec2:CreateAction": "RunInstances"
+      }
+    }
+  },
   {
     // Deny EC2 instance creation if CreatedBy tag is missing or empty
     // "Null": "true" means the tag doesn't exist or has no value
     Effect: "Deny",
     Action: "ec2:RunInstances",
-    Resource: "arn:aws:ec2:*:*:instance/*",
+    Resource: "arn:aws:ec2:*:*:instance/!*",
     Condition: {
       "Null": {
+        // Todas las instancias deben tener el tag CreatedBy
         "aws:RequestTag/CreatedBy": "true"
       }
     }
-  }
+  }*/
 ] as const;
 
 export const ec2CostControlPolicy = new aws.iam.GroupPolicy("ec2-cost-control", {

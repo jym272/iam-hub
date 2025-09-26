@@ -39,3 +39,4 @@ Diagnostics:
 - Se debería respaldarse en aws managed policies, usar estas en grupos para los users, luego 
   cada user individual podría tener policies más específicas.
 - Allowed regions no funciona, de todas formas por ahora no se necesita eso?.
+- Testar EC2 large instances en ecs
