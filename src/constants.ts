@@ -7,8 +7,11 @@ export const ADMIN_EMAILS = ["jorge.clavijo@gm2dev.com"];
 export const ALLOWED_REGIONS = ["us-west-2", "us-east-1"];
 
 // Instance types allowed (cost control)
+// https://aws.amazon.com/es/ec2/instance-types/
 export const ALLOWED_EC2_INSTANCES = [
   "t3.nano", "t3.micro", "t3.small",
+  "t3a.nano", "t3a.micro", "t3a.small",
+  "t4g.nano", "t4g.micro", "t4g.small",
   "t2.nano", "t2.micro", "t2.small"
 ];
 
