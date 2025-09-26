@@ -22,18 +22,36 @@ export function createCostTrackingPolicy(username: string, costCenter: string): 
           }
         }
       },
+      // Sistema de tags, medio policía, no es ideal y necesita refactor, debería estar en la sección donde se activa servicios.
       {
         Effect: "Deny",
         Action: [
           // Deny expensive services that could blow budget
           "ec2:RunInstances",
-          "rds:CreateDBInstance",
-          "redshift:CreateCluster"
+          // "rds:CreateDBInstance", -> necesita "arn:aws:rds:*:*:db:*" -> example.json
+          // "redshift:CreateCluster"
         ],
-        Resource: "*",
+        Resource: "arn:aws:ec2:*:*:instance/*",
         Condition: {
           "StringNotEquals": {
             "aws:RequestTag/CreatedBy": username,
+            // No puede estar en la misma condición, por lógica de exito es un OR, es decir, solo niega la creacion si ningún tag coincide, se desea que ambos existan
+            // por eso se repite la policy.
+            // "aws:RequestTag/CostCenter": costCenter,
+          }
+        }
+      },
+      {
+        Effect: "Deny",
+        Action: [
+          // Deny expensive services that could blow budget
+          "ec2:RunInstances",
+          // "rds:CreateDBInstance", -> necesita "arn:aws:rds:*:*:db:*" -> example.json
+          // "redshift:CreateCluster"
+        ],
+        Resource: "arn:aws:ec2:*:*:instance/*",
+        Condition: {
+          "StringNotEquals": {
             "aws:RequestTag/CostCenter": costCenter
           }
         }
@@ -63,7 +81,7 @@ export function createResourceLimitsPolicy(username: string): string {
         Resource: "*",
         Condition: {
           "ForAnyValue:StringNotEquals": {
-            "rds:db-instance-class": ALLOWED_RDS_INSTANCES
+            "rds:DatabaseClass": ALLOWED_RDS_INSTANCES
           }
         }
       },
@@ -88,8 +106,8 @@ export function createResourceLimitsPolicy(username: string): string {
           "elasticloadbalancing:CreateLoadBalancer",
           "rds:CreateDBCluster",
           "redshift:CreateCluster",
-          "elasticsearch:CreateElasticsearchDomain",
-          "opensearch:CreateDomain"
+          "es:CreateElasticsearchDomain",
+          "es:CreateDomain"
         ],
         Resource: "*",
         Condition: {

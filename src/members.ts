@@ -1,12 +1,13 @@
 // Enhanced team member interface with budget controls
+import type {ServiceName} from "@/iam";
+
 interface TeamMemberWithBudget {
   username: string;
-  services: string[];
+  services: ServiceName[];
   monthlyBudgetUSD: number;
   environment: string;
   needsConsoleAccess?: boolean;
   needsAccessKey?: boolean;
-  costCenter?: string;
   budgetAlerts?: {
     warningThreshold: number; // percentage (e.g., 80 for 80%)
     criticalThreshold: number; // percentage (e.g., 100 for 100%)
@@ -23,7 +24,6 @@ export const teamMembersWithBudgets: TeamMemberWithBudget[] = [
   //   environment: "production",
   //   needsConsoleAccess: true,
   //   needsAccessKey: true,
-  //   costCenter: "engineering",
   //   budgetAlerts: {
   //     warningThreshold: 80,
   //     criticalThreshold: 100,
@@ -37,7 +37,6 @@ export const teamMembersWithBudgets: TeamMemberWithBudget[] = [
   //   environment: "development",
   //   needsConsoleAccess: true,
   //   needsAccessKey: false,
-  //   costCenter: "development",
   //   budgetAlerts: {
   //     warningThreshold: 75,
   //     criticalThreshold: 90,
@@ -46,12 +45,11 @@ export const teamMembersWithBudgets: TeamMemberWithBudget[] = [
   // },
   {
     username: "maria-gonzalez",
-    services: ["lambda", "s3"],
+    services: ["ec2"],
     monthlyBudgetUSD: 200, // $200/month for serverless dev
     environment: "development",
     needsConsoleAccess: true,
     needsAccessKey: true,
-    costCenter: "frontend",
     budgetAlerts: {
       warningThreshold: 85,
       criticalThreshold: 100,

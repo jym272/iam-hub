@@ -1,0 +1,65 @@
+{
+  "Version": "2012-10-17",
+  "Statement": [
+    {
+      "Effect": "Deny",
+      "Action": "ec2:RunInstances",
+      "Resource": "arn:aws:ec2:*:*:instance/*",
+      "Condition": {
+        "StringNotEquals": {
+          "aws:RequestTag/CreatedBy": "maria-gonzalez"
+        }
+      }
+    },
+    {
+      "Effect": "Deny",
+      "Action": "ec2:RunInstances",
+      "Resource": "arn:aws:ec2:*:*:instance/*",
+      "Condition": {
+        "StringNotEquals": {
+          "aws:RequestTag/CostCenter": "frontend"
+        }
+      }
+    },
+    {
+      "Effect": "Deny",
+      "Action": "rds:CreateDBInstance",
+      "Resource": "arn:aws:rds:*:*:db:*",
+      "Condition": {
+        "StringNotEquals": {
+          "aws:RequestTag/CreatedBy": "maria-gonzalez"
+        }
+      }
+    },
+    {
+      "Effect": "Deny",
+      "Action": "rds:CreateDBInstance",
+      "Resource": "arn:aws:rds:*:*:db:*",
+      "Condition": {
+        "StringNotEquals": {
+          "aws:RequestTag/CostCenter": "frontend"
+        }
+      }
+    },
+    {
+      "Effect": "Deny",
+      "Action": "redshift:CreateCluster",
+      "Resource": "arn:aws:redshift:*:*:cluster:*",
+      "Condition": {
+        "StringNotEquals": {
+          "aws:RequestTag/CreatedBy": "maria-gonzalez"
+        }
+      }
+    },
+    {
+      "Effect": "Deny",
+      "Action": "redshift:CreateCluster",
+      "Resource": "arn:aws:redshift:*:*:cluster:*",
+      "Condition": {
+        "StringNotEquals": {
+          "aws:RequestTag/CostCenter": "frontend"
+        }
+      }
+    }
+  ]
+}

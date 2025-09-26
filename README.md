@@ -1,4 +1,9 @@
 # infra
+				.--.
+				|o_o|
+				|:_/|
+
+`console`: https://309237749333.signin.aws.amazon.com/console
 
 To install dependencies:
 
@@ -12,6 +17,7 @@ brew install mise
 
 
 ### Recursos creados a "mano"
+
 *<small>primero la trampa, después el queso</small>*
 
 - La activación de identity center en la región de us-east-2
@@ -42,9 +48,17 @@ aws iam attach-user-policy --user-name jorge-clavijo --policy-arn arn:aws:iam::a
         "CreateDate": "2025-09-23T23:21:36+00:00"
     }
 }
+aws iam create-login-profile --user-name jorge-clavijo --password "YourPassword123" --password-reset-required
+{
+    "LoginProfile": {
+        "UserName": "jorge-clavijo",
+        "CreateDate": "2025-09-25T01:56:29+00:00",
+        "PasswordResetRequired": true
+    }
+}
 ```
 
-State de pulumi 
+State de pulumi, se usa un bucket
 
 ```shell
 # Se revisa que la config de default creé un bucket no público.
@@ -62,17 +76,18 @@ pulumi stack init dev
 # Type check
 bun run type-check
 
+export PULUMI_CONFIG_PASSPHRASE=gm2dev
+#Preview
+pulumi preview
 # Deploy
-PULUMI_CONFIG_PASSPHRASE=gm2dev pulumi up
-
+ pulumi up
 # Get user credentials (access keys and secrets)
-PULUMI_CONFIG_PASSPHRASE=gm2dev pulumi stack output userCredentials --show-secrets --json
+pulumi stack output userCredentials --show-secrets --json
 
 # Get console access (temporary passwords for AWS console login)
-PULUMI_CONFIG_PASSPHRASE=gm2dev pulumi stack output consoleAccess --show-secrets --json
+pulumi stack output consoleAccess --show-secrets --json
 # Get all stack outputs
-PULUMI_CONFIG_PASSPHRASE=gm2dev pulumi stack output --json
-
+pulumi stack output --json
 # Destroy
 pulumi destroy
 # destroy stack

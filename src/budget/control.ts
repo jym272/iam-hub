@@ -1,8 +1,6 @@
 import * as aws from "@pulumi/aws";
 import {teamMembersWithBudgets} from "../members.ts";
-import {createCombinedPolicy, createCostTrackingPolicy, createResourceLimitsPolicy} from "../policies/index.ts";
-import {ADMIN_EMAILS, BUDGET_START_DATE, FORECASTED_THRESHOLD} from "../constants.ts";
-import {budgetAlertsTopic} from "./enforcement.ts";
+import {serviceToGroup, billingGroup, generalCostControlPolicy, type ServiceName} from "../iam/groups.ts";
 
 // Create account password policy for user-friendly passwords
 export const accountPasswordPolicy = new aws.iam.AccountPasswordPolicy("account-password-policy", {
@@ -26,7 +24,6 @@ export const teamResourcesWithBudgets = teamMembersWithBudgets.map(member => {
     path: "/",
     tags: {
       Environment: member.environment,
-      CostCenter: member.costCenter || "default",
       MonthlyBudget: member.monthlyBudgetUSD.toString(),
       CreatedBy: member.username,
       BudgetTracking: "enabled"
@@ -34,22 +31,28 @@ export const teamResourcesWithBudgets = teamMembersWithBudgets.map(member => {
     forceDestroy: true
   });
 
-  // Create service permissions policy
-  const servicePolicy = new aws.iam.UserPolicy(`service-policy-${member.username}`, {
+  // Add user to service groups based on their required services
+  const groupMemberships = member.services
+      // should be kinda useless with correct ts checks
+    .filter((service): service is ServiceName => service in serviceToGroup)
+    .map(service => {
+      return new aws.iam.UserGroupMembership(`user-group-${member.username}-${service}`, {
+        user: user.name,
+        groups: [serviceToGroup[service].name]
+      });
+    });
+
+  // Add user to billing group for cost monitoring
+  const billingGroupMembership = new aws.iam.UserGroupMembership(`user-group-${member.username}-billing`, {
     user: user.name,
-    policy: createCombinedPolicy(member.services)
+    groups: [billingGroup.name]
   });
 
-  // Create cost tracking policy
-  const costTrackingPolicy = new aws.iam.UserPolicy(`cost-tracking-${member.username}`, {
-    user: user.name,
-    policy: createCostTrackingPolicy(member.username, member.costCenter || "default")
-  });
 
-  // Create resource limits policy to prevent expensive resources
-  const resourceLimitsPolicy = new aws.iam.UserPolicy(`resource-limits-${member.username}`, {
+  // Attach general cost control policy
+  const generalCostControlAttachment = new aws.iam.UserPolicyAttachment(`user-cost-control-${member.username}`, {
     user: user.name,
-    policy: createResourceLimitsPolicy(member.username)
+    policyArn: generalCostControlPolicy.arn
   });
 
   // TODO: activate Budgets later. Create AWS Budget for this user
@@ -116,9 +119,9 @@ export const teamResourcesWithBudgets = teamMembersWithBudgets.map(member => {
   return {
     user,
     // userBudget,
-    servicePolicy,
-    costTrackingPolicy,
-    resourceLimitsPolicy,
+    groupMemberships,
+    billingGroupMembership,
+    generalCostControlAttachment,
     accessKey,
     loginProfile,
     memberConfig: member

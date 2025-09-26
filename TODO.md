@@ -2,7 +2,8 @@
 - CI/CD -> for sure! -> GH ACTIONS. step para agregar pulumi al runner, o capaz el runner ya 
   viene con pulumi
 - agregar lint, ts check, etc....
-- como manejar secretos del stack en ci/cd?, necesitamos -y para todos los comandos, capaz 
+- como manejar secretos del stack en ci/cd?, necesitamos -y para todos los comandos, capaz
+- para las actions: https://www.pulumi.com/registry/packages/aws/installation-configuration/#authenticate-with-webidentity-and-openid-connect-oidc
   existe una env var
 - migrar todo a un repo de gm2dev
 - lint para yaml files!
@@ -13,6 +14,8 @@
 ---
 
 CRITICS:
+
+Compartir este repo.
 
 Habilitar Identity Center en la org?
 Se necesita habilitar "Budgets", se tiene que tener instrucciones primero
@@ -30,4 +33,9 @@ Diagnostics:
 
 ```
 
-- Error en las policies de recursos -> reparar
+- Pensar mejor en agrupar los roles, si bien dividir las policies en "servicios", como ec2, 
+  parece ideal, realmente no lo es, ya que muchos otros servicios usan ec2, el approach de 
+  módulos que previenen la creacion de instancias grandes por separado parece correcta.
+- Se debería respaldarse en aws managed policies, usar estas en grupos para los users, luego 
+  cada user individual podría tener policies más específicas.
+- Allowed regions no funciona, de todas formas por ahora no se necesita eso?.

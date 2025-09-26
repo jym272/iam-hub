@@ -11,6 +11,8 @@ interface PolicyDocument {
   Statement: PolicyStatement[];
 }
 
+// Managed Policies https://docs.aws.amazon.com/aws-managed-policy/latest/reference/AmazonEC2FullAccess.html
+
 
 export const servicePermissions: Record<string, PolicyDocument> = {
   // TODO: hardcoded "services" key for now, it should be dynamic!
@@ -24,7 +26,8 @@ export const servicePermissions: Record<string, PolicyDocument> = {
           "s3:PutObject",
           "s3:DeleteObject",
           "s3:ListBucket",
-          "s3:GetBucketLocation"
+          "s3:GetBucketLocation",
+          "s3:ListAllMyBuckets"
         ],
         Resource: ["arn:aws:s3:::*", "arn:aws:s3:::*/*"]
       }
@@ -105,17 +108,14 @@ export const servicePermissions: Record<string, PolicyDocument> = {
       }
     ]
   },
-
+  // TODO: tendrían que ser managed policies mejor, ya en createResourceLimitsPolicy existe ALLOWED_EC2_INSTANCES
   ec2: {
     Version: "2012-10-17",
     Statement: [
       {
         Effect: "Allow",
         Action: [
-          "ec2:Describe*",
-          "ec2:StartInstances",
-          "ec2:StopInstances",
-          "ec2:RebootInstances"
+          "ec2:*",
         ],
         Resource: "*"
       }
