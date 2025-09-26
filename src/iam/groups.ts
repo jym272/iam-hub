@@ -1,6 +1,9 @@
 import * as aws from "@pulumi/aws";
 import {ALLOWED_REGIONS, ALLOWED_EC2_INSTANCES, ALLOWED_RDS_INSTANCES} from "../constants.ts";
 
+// Get current AWS account ID
+const current = aws.getCallerIdentity({});
+
 // https://docs.aws.amazon.com/aws-managed-policy/latest/reference/AmazonEC2ReadOnlyAccess.html
 
 // AWS Managed Policy ARNs
@@ -198,6 +201,115 @@ export const lambdaTaggingPolicy = new aws.iam.GroupPolicy("lambda-tagging-polic
   })
 });
 
+/////////////////////// SST Group /////////////////////////////////////////////////////////////////////////////
+
+export const sstGroup = new aws.iam.Group("sst-group", {
+  name: "SSTUsers",
+  path: "/service-groups/"
+});
+
+export const sstGroupPolicy = new aws.iam.GroupPolicy("sst-group-policy", {
+  group: sstGroup.name,
+  policy: current.then(account => JSON.stringify({
+    Version: "2012-10-17",
+    Statement: [
+      {
+        Sid: "ManageBootstrapStateBucket",
+        Effect: "Allow",
+        Action: [
+          "s3:CreateBucket",
+          "s3:PutBucketVersioning",
+          "s3:PutBucketNotification",
+          "s3:PutBucketPolicy",
+          "s3:DeleteObject",
+          "s3:GetObject",
+          "s3:ListBucket",
+          "s3:PutObject"
+        ],
+        Resource: [
+          "arn:aws:s3:::sst-state-*"
+        ]
+      },
+      {
+        Sid: "ManageBootstrapAssetBucket",
+        Effect: "Allow",
+        Action: [
+          "s3:CreateBucket",
+          "s3:PutBucketVersioning",
+          "s3:PutBucketNotification",
+          "s3:PutBucketPolicy",
+          "s3:DeleteObject",
+          "s3:GetObject",
+          "s3:ListBucket",
+          "s3:PutObject"
+        ],
+        Resource: [
+          "arn:aws:s3:::sst-asset-*"
+        ]
+      },
+      {
+        Sid: "ManageBootstrapECRRepo",
+        Effect: "Allow",
+        Action: [
+          "ecr:CreateRepository",
+          "ecr:DescribeRepositories"
+        ],
+        Resource: ALLOWED_REGIONS.map(region =>
+          `arn:aws:ecr:${region}:${account.accountId}:repository/sst-asset`
+        )
+      },
+      {
+        Sid: "ManageBootstrapSSMParameter",
+        Effect: "Allow",
+        Action: [
+          "ssm:GetParameters",
+          "ssm:PutParameter"
+        ],
+        Resource: ALLOWED_REGIONS.flatMap(region => [
+          `arn:aws:ssm:${region}:${account.accountId}:parameter/sst/passphrase/*`,
+          `arn:aws:ssm:${region}:${account.accountId}:parameter/sst/bootstrap`
+        ])
+      },
+      {
+        Sid: "Deployments",
+        Effect: "Allow",
+        Action: [
+          "*"
+        ],
+        Resource: [
+          "*"
+        ]
+      },
+      {
+        Sid: "ManageSecrets",
+        Effect: "Allow",
+        Action: [
+          "ssm:DeleteParameter",
+          "ssm:GetParameter",
+          "ssm:GetParameters",
+          "ssm:GetParametersByPath",
+          "ssm:PutParameter"
+        ],
+        Resource: ALLOWED_REGIONS.map(region =>
+          `arn:aws:ssm:${region}:${account.accountId}:parameter/sst/*`
+        )
+      },
+      {
+        Sid: "LiveLambdaSocketConnection",
+        Effect: "Allow",
+        Action: [
+          "appsync:EventSubscribe",
+          "appsync:EventPublish",
+          "appsync:EventConnect"
+        ],
+        Resource: [
+          "*"
+        ]
+      }
+    ]
+  }))
+});
+
 
 
 /////////////////////// Billing Group /////////////////////////////////////////////////////////////////////////////
@@ -283,6 +395,7 @@ export const serviceToGroup = {
   ecs: ecsGroup,
   rds: rdsGroup,
   lambda: lambdaGroup,
+  sst: sstGroup,
   regionRestriction: universalRestrictionsGroup
 } as const;
 
