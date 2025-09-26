@@ -1,30 +1,32 @@
 # GM2 Budget Control Infrastructure - Claude Reference
 
 ## Project Overview
-This is a Pulumi-based AWS infrastructure project that implements comprehensive budget control and cost management for team members with automated enforcement capabilities. The system uses a group-based IAM architecture with mandatory tagging, cost controls, and user-friendly password policies.
+This is a Pulumi-based AWS infrastructure project that implements comprehensive budget control and cost management for team members with automated enforcement capabilities. The system uses a group-based IAM architecture with region restrictions, strict cost controls, and sophisticated tagging policies.
 
 ## Major Architecture Improvements 🚀
 
-### New Group-Based IAM System (`src/iam/`)
-- **Service Groups**: EC2Users, S3Users, ECSUsers, RDSUsers, LambdaUsers, BillingReadOnlyAccessUsers
+### Advanced Group-Based IAM System (`src/iam/`)
+- **Service Groups**: EC2Users, S3Users, ECSUsers, RDSUsers, LambdaUsers, BillingReadOnlyAccessUsers, UniversalRestrictions
 - **AWS Managed Policies**: Uses production-ready AWS managed policies for each service
-- **Automatic Group Assignment**: Users automatically assigned to groups based on required services
-- **Cost Control Policies**: Service-specific policies with tagging requirements and resource limits
-- **Billing Access**: All users get read-only access to billing for cost transparency
+- **Universal Region Restrictions**: All services restricted to sa-east-1 only via UniversalRestrictions group
+- **Service-Specific Cost Controls**: Instance type restrictions, volume limits, and expensive service blocks
+- **Selective Tagging Enforcement**: Strategic tagging requirements (removed from EC2 for UX, kept for S3/RDS/Lambda)
+- **Billing Transparency**: All users get read-only billing access for cost awareness
 
 ### Enhanced Budget Control System (`src/budget/`)
-- **`control.ts`**: Creates IAM users with group memberships, mandatory tagging, and access provisioning
-- **`enforcement.ts`**: SNS topic for budget alerts (Lambda enforcement temporarily disabled)
-- **User-Friendly Password Policy**: 8+ characters, mixed case + numbers, no special chars required
+- **`control.ts`**: Creates IAM users with group memberships, password policies, and access provisioning
+- **`enforcement.ts`**: SNS topic ready for budget alerts (Lambda enforcement disabled for iteration)
+- **User-Friendly Password Policy**: 8+ characters, mixed case + numbers, symbols optional
 
 ### Legacy Policies (`src/policies/` - Deprecated)
-- **`service.ts`**: Least-privilege service permissions (NOW REPLACED by group system)
-- **`cost.ts`**: Cost control policies (NOW REPLACED by group policies)
+- **`service.ts`**: Least-privilege service permissions (REPLACED by group system)
+- **`cost.ts`**: Cost control policies (REPLACED by group policies)
 
 ### Core Configuration
 - **`src/members.ts`**: Enhanced team member definitions with service arrays and access options
-- **`src/constants.ts`**: Global constants (emails, regions, instance types, thresholds)
+- **`src/constants.ts`**: Global constants with strict regional and instance type restrictions
 - **`src/dashboard.ts`**: CloudWatch cost monitoring dashboard
+- **`src/infra.ts`**: Stack outputs and deployment summaries
 
 ## Commands
 
@@ -50,12 +52,12 @@ This is a Pulumi-based AWS infrastructure project that implements comprehensive 
 ### Security & Cost Controls
 - **Group-Based Permissions**: Users inherit service permissions through IAM groups
 - **AWS Managed Policies**: Production-ready policies (AmazonEC2FullAccess, AmazonS3FullAccess, etc.)
-- **Mandatory Tagging**: All resources must have `CreatedBy` tag or creation is denied
-- **Instance Type Restrictions**: t2/t3 micro/small/nano only for EC2 and RDS
-- **EBS Volume Limits**: 100GB maximum volume size
-- **Region Restrictions**: Limited to us-west-2 and us-east-1
+- **Universal Region Restrictions**: ALL AWS services limited to **sa-east-1 only** via global policy
+- **Strategic Tagging**: Required for S3 buckets, RDS instances, and Lambda functions (EC2 tagging removed for UX)
+- **Instance Type Restrictions**: t2/t3/t3a/t4g nano/micro/small only for EC2 and RDS (expanded ARM support)
+- **EBS Volume Limits**: 100GB maximum volume size across all services
 - **Expensive Service Blocks**: CloudFront, Route53, Load Balancers, RDS clusters, Redshift, Elasticsearch
-- **User-Friendly Passwords**: 8+ chars, mixed case + numbers, no special chars required
+- **User-Friendly Passwords**: 8+ chars, mixed case + numbers, symbols optional (not required)
 
 ### Budget Enforcement
 - **SNS Topic**: Ready for budget alert integration
@@ -97,10 +99,10 @@ src/
 📊 Total: ~897 lines of TypeScript code
 ```
 
-## Key Constants (src/constants.ts)
-- `ADMIN_EMAILS`: Budget alert recipients
-- `ALLOWED_REGIONS`: Cost-controlled AWS regions (`["us-west-2", "us-east-1"]`)
-- `ALLOWED_EC2_INSTANCES`: Permitted instance types (`t3.nano/micro/small`, `t2.nano/micro/small`)
+## Key Constants (src/constants.ts) - UPDATED 🔄
+- `ADMIN_EMAILS`: Budget alert recipients (`["jorge.clavijo@gm2dev.com"]`)
+- `ALLOWED_REGIONS`: **STRICT REGIONAL CONTROL** - Only `["sa-east-1"]` (South America São Paulo)
+- `ALLOWED_EC2_INSTANCES`: **EXPANDED ARM SUPPORT** - t3/t3a/t4g/t2 nano/micro/small (includes ARM instances)
 - `ALLOWED_RDS_INSTANCES`: Permitted RDS classes (`db.t3.micro`, `db.t2.micro`)
 - `FORECASTED_THRESHOLD`: Budget threshold for access key disabling (100%)
 - `BUDGET_START_DATE`: Budget period start ("2025-01-01_00:00")
@@ -124,13 +126,14 @@ interface TeamMemberWithBudget {
 }
 ```
 
-### Service Groups Available
-- `"ec2"` → EC2Users group (full EC2 access + tagging policies)
-- `"s3"` → S3Users group (full S3 access + tagging policies)
-- `"ecs"` → ECSUsers group (full ECS access)
-- `"rds"` → RDSUsers group (full RDS access + cost controls)
-- `"lambda"` → LambdaUsers group (full Lambda access + tagging policies)
-- All users also get BillingReadOnlyAccess automatically
+### Service Groups Available - UPDATED 🔄
+- `"ec2"` → EC2Users group (full EC2 access + instance type restrictions, **NO TAGGING required**)
+- `"s3"` → S3Users group (full S3 access + **MANDATORY CreatedBy tagging**)
+- `"ecs"` → ECSUsers group (full ECS access + EC2 instance type restrictions)
+- `"rds"` → RDSUsers group (full RDS access + instance class restrictions + **MANDATORY CreatedBy tagging**)
+- `"lambda"` → LambdaUsers group (full Lambda access + **MANDATORY CreatedBy tagging**)
+- `"regionRestriction"` → UniversalRestrictions group (**ALL services limited to sa-east-1**)
+- **Automatic**: All users get BillingReadOnlyAccess and GeneralCostControl policies
 
 ## Common Issues & Fixes
 
@@ -183,17 +186,19 @@ Available in `infra.ts` export for programmatic access.
 7. ✅ Test group memberships in AWS Console
 
 ## Current Status - Production Ready 🚀
-- **Architecture**: Group-based IAM with AWS managed policies
-- **Resources**: ~15+ AWS resources deployed (users, groups, policies, dashboard, SNS)
+- **Architecture**: Advanced group-based IAM with AWS managed policies and universal restrictions
+- **Resources**: ~20+ AWS resources deployed (7 IAM groups, policies, user, dashboard, SNS)
 - **Team Budget**: $200/month total
-- **Active Members**: 1 user (maria-gonzalez) with EC2 access
-- **Security**: Production-ready with comprehensive cost controls
-- **Password Policy**: User-friendly (8+ chars, mixed case + numbers, no symbols required)
-- **Budget Framework**: SNS topic ready, budgets disabled for iteration
-- **Type Safety**: ✅ All TypeScript errors resolved with strict configuration
+- **Active Members**: 1 user (maria-gonzalez) with ECS + region restrictions
+- **Security**: Enterprise-ready with comprehensive cost controls and regional limitations
+- **Regional Control**: **STRICT** - All AWS services limited to sa-east-1 only
+- **Instance Types**: Expanded ARM support (t3a, t4g) for cost optimization
+- **Password Policy**: User-friendly (8+ chars, mixed case + numbers, symbols optional)
+- **Tagging Strategy**: Strategic enforcement (removed from EC2 for UX, kept for S3/RDS/Lambda)
+- **Budget Framework**: SNS topic ready, individual budgets disabled for iteration
+- **Type Safety**: ✅ All TypeScript errors resolved with strict bundler configuration
 - **Cost Dashboard**: CloudWatch dashboard for team cost monitoring
 - **Access Provisioning**: Both console and programmatic access supported
-- **Tagging**: Mandatory `CreatedBy` tags enforced across all services
 
 ## Next Iteration Features
 - [ ] Re-enable individual user budgets with proper Lambda deployment
@@ -202,5 +207,65 @@ Available in `infra.ts` export for programmatic access.
 - [ ] Add cost anomaly detection
 - [ ] Expand service coverage (add more AWS services)
 
+## Recent Major Improvements (Latest Commits) 🚀
+
+### dd54226: "feat: only sa-east-1 region allowed"
+- **BREAKING**: Restricted ALL AWS services to sa-east-1 region only
+- Enhanced cost control through strict geographic limitations
+- Significant cost savings by limiting to South America region
+
+### 20b5396: "feat: force tags in creation not more"
+- **UX IMPROVEMENT**: Removed mandatory tagging from EC2 instances for better user experience
+- Strategic tagging policy: kept mandatory for S3, RDS, Lambda (high-cost services)
+- Balanced security vs usability approach
+
+### e254213: "feat: region restrictions"
+- Implemented universal region restrictions via UniversalRestrictions group
+- Added regionRestriction service to members configuration
+- Global policy enforcement across all AWS services
+
+### e8d42d0: "feat: update instance types"
+- **EXPANDED**: Added ARM instance support (t3a, t4g) for better price/performance
+- Cost optimization through modern ARM-based instances
+- Maintained strict size limits (nano/micro/small only)
+
+## Productivity Tips for Claude Code Sessions 💡
+
+### Key Patterns to Follow
+1. **Always check current constants first**: `src/constants.ts` has the latest restrictions
+2. **Region is LOCKED**: Don't suggest resources outside sa-east-1
+3. **Instance types are STRICT**: Only t2/t3/t3a/t4g nano/micro/small allowed
+4. **Tagging is STRATEGIC**: Required for S3/RDS/Lambda, optional for EC2
+5. **Group membership is AUTOMATIC**: Users join groups based on `services` array
+6. **Budget system is DISABLED**: Focus on cost control through policies, not budgets
+
+### Quick Commands Reference
+```bash
+# Type check (always run first)
+bun run type-check
+
+# Preview changes
+PULUMI_CONFIG_PASSPHRASE=gm2dev pulumi preview
+
+# Deploy (with confirmation)
+PULUMI_CONFIG_PASSPHRASE=gm2dev pulumi up
+
+# Deploy (auto-confirm)
+bun run deploy:like-a-boss
+
+# Get credentials
+PULUMI_CONFIG_PASSPHRASE=gm2dev pulumi stack output userCredentials --show-secrets --json
+
+# Get console access
+PULUMI_CONFIG_PASSPHRASE=gm2dev pulumi stack output consoleAccess --show-secrets --json
+```
+
+### Current Architecture Priorities
+1. **Cost Control First**: Every change should maintain or improve cost controls
+2. **Regional Compliance**: sa-east-1 only for all services
+3. **User Experience**: Balance security with usability (EC2 tagging example)
+4. **Type Safety**: Maintain strict TypeScript configuration
+5. **Production Ready**: All changes should be production-grade
+
 ---
-*Last Updated: Based on commit 392dcd0 "feat: groups with users"*
+*Last Updated: Based on commit dd54226 "feat: only sa-east-1 region allowed" - September 2025*
