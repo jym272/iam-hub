@@ -14,6 +14,7 @@ const AWS_MANAGED_POLICIES = {
   BILLING_READ_ONLY: "arn:aws:iam::aws:policy/AWSBillingReadOnlyAccess"
 } as const;
 
+/////////////////////// EC2 GROUP /////////////////////////////////////////////////////////////////////////////
 // Create service-specific IAM groups with AWS managed policies
 export const ec2Group = new aws.iam.Group("ec2-group", {
   name: "EC2Users",
@@ -25,6 +26,40 @@ export const ec2GroupPolicyAttachment = new aws.iam.GroupPolicyAttachment("ec2-g
   policyArn: AWS_MANAGED_POLICIES.EC2_FULL_ACCESS
 });
 
+const ec2CostControl = [
+  {
+    Effect: "Deny",
+    Action: "ec2:RunInstances",
+    Resource: "arn:aws:ec2:*:*:instance/*",
+    Condition: {
+      "ForAnyValue:StringNotEquals": {
+        "ec2:InstanceType": ALLOWED_EC2_INSTANCES
+      }
+    }
+  },
+  {
+    // Deny EC2 instance creation if CreatedBy tag is missing or empty
+    // "Null": "true" means the tag doesn't exist or has no value
+    Effect: "Deny",
+    Action: "ec2:RunInstances",
+    Resource: "arn:aws:ec2:*:*:instance/*",
+    Condition: {
+      "Null": {
+        "aws:RequestTag/CreatedBy": "true"
+      }
+    }
+  }
+] as const;
+
+export const ec2CostControlPolicy = new aws.iam.GroupPolicy("ec2-cost-control", {
+  group: ec2Group.name,
+  policy: JSON.stringify({
+    Version: "2012-10-17",
+    Statement: ec2CostControl
+  })
+});
+
+/////////////////////// s3 GROUP /////////////////////////////////////////////////////////////////////////////
 export const s3Group = new aws.iam.Group("s3-group", {
   name: "S3Users",
   path: "/service-groups/"
@@ -33,88 +68,6 @@ export const s3Group = new aws.iam.Group("s3-group", {
 export const s3GroupPolicyAttachment = new aws.iam.GroupPolicyAttachment("s3-group-policy", {
   group: s3Group.name,
   policyArn: AWS_MANAGED_POLICIES.S3_FULL_ACCESS
-});
-
-export const ecsGroup = new aws.iam.Group("ecs-group", {
-  name: "ECSUsers",
-  path: "/service-groups/"
-});
-
-export const ecsGroupPolicyAttachment = new aws.iam.GroupPolicyAttachment("ecs-group-policy", {
-  group: ecsGroup.name,
-  policyArn: AWS_MANAGED_POLICIES.ECS_FULL_ACCESS
-});
-
-export const rdsGroup = new aws.iam.Group("rds-group", {
-  name: "RDSUsers",
-  path: "/service-groups/"
-});
-
-export const rdsGroupPolicyAttachment = new aws.iam.GroupPolicyAttachment("rds-group-policy", {
-  group: rdsGroup.name,
-  policyArn: AWS_MANAGED_POLICIES.RDS_FULL_ACCESS
-});
-
-export const lambdaGroup = new aws.iam.Group("lambda-group", {
-  name: "LambdaUsers",
-  path: "/service-groups/"
-});
-
-export const lambdaGroupPolicyAttachment = new aws.iam.GroupPolicyAttachment("lambda-group-policy", {
-  group: lambdaGroup.name,
-  policyArn: AWS_MANAGED_POLICIES.LAMBDA_FULL_ACCESS
-});
-
-export const billingGroup = new aws.iam.Group("billing-group", {
-  name: "BillingReadOnlyAccessUsers",
-  path: "/service-groups/"
-});
-
-export const billingGroupPolicyAttachment = new aws.iam.GroupPolicyAttachment("billing-group-policy", {
-  group: billingGroup.name,
-  policyArn: AWS_MANAGED_POLICIES.BILLING_READ_ONLY
-});
-
-// Cost control and tagging policies for groups
-export const ec2CostControlPolicy = new aws.iam.GroupPolicy("ec2-cost-control", {
-  group: ec2Group.name,
-  policy: JSON.stringify({
-    Version: "2012-10-17",
-    Statement: [
-      {
-        Effect: "Deny",
-        Action: "ec2:RunInstances",
-        Resource: "arn:aws:ec2:*:*:instance/*",
-        Condition: {
-          "ForAnyValue:StringNotEquals": {
-            "ec2:InstanceType": ALLOWED_EC2_INSTANCES
-          }
-        }
-      },
-      {
-        Effect: "Deny",
-        Action: "ec2:RunInstances",
-        Resource: "arn:aws:ec2:*:*:instance/*",
-        Condition: {
-          "StringNotEquals": {
-            "aws:RequestedRegion": ALLOWED_REGIONS
-          }
-        }
-      },
-      {
-        // Deny EC2 instance creation if CreatedBy tag is missing or empty
-        // "Null": "true" means the tag doesn't exist or has no value
-        Effect: "Deny",
-        Action: "ec2:RunInstances",
-        Resource: "arn:aws:ec2:*:*:instance/*",
-        Condition: {
-          "Null": {
-            "aws:RequestTag/CreatedBy": "true"
-          }
-        }
-      }
-    ]
-  })
 });
 
 export const s3TaggingPolicy = new aws.iam.GroupPolicy("s3-tagging-policy", {
@@ -136,23 +89,38 @@ export const s3TaggingPolicy = new aws.iam.GroupPolicy("s3-tagging-policy", {
   })
 });
 
-export const lambdaTaggingPolicy = new aws.iam.GroupPolicy("lambda-tagging-policy", {
-  group: lambdaGroup.name,
+/////////////////////// ECS Group /////////////////////////////////////////////////////////////////////////////
+
+export const ecsGroup = new aws.iam.Group("ecs-group", {
+  name: "ECSUsers",
+  path: "/service-groups/"
+});
+
+export const ecsGroupPolicyAttachment = new aws.iam.GroupPolicyAttachment("ecs-group-policy", {
+  group: ecsGroup.name,
+  policyArn: AWS_MANAGED_POLICIES.ECS_FULL_ACCESS
+});
+
+
+export const ecsCostControlPolicy = new aws.iam.GroupPolicy("ecs-cost-control", {
+  group: ecsGroup.name,
   policy: JSON.stringify({
     Version: "2012-10-17",
-    Statement: [
-      {
-        Effect: "Deny",
-        Action: "lambda:CreateFunction",
-        Resource: "*",
-        Condition: {
-          "Null": {
-            "aws:RequestTag/CreatedBy": "true"
-          }
-        }
-      }
-    ]
+    // Ecs crea instancias ec2
+    Statement: ec2CostControl
   })
+});
+
+/////////////////////// RDS Group /////////////////////////////////////////////////////////////////////////////
+
+export const rdsGroup = new aws.iam.Group("rds-group", {
+  name: "RDSUsers",
+  path: "/service-groups/"
+});
+
+export const rdsGroupPolicyAttachment = new aws.iam.GroupPolicyAttachment("rds-group-policy", {
+  group: rdsGroup.name,
+  policyArn: AWS_MANAGED_POLICIES.RDS_FULL_ACCESS
 });
 
 export const rdsCostControlPolicy = new aws.iam.GroupPolicy("rds-cost-control", {
@@ -173,16 +141,6 @@ export const rdsCostControlPolicy = new aws.iam.GroupPolicy("rds-cost-control", 
       {
         Effect: "Deny",
         Action: "rds:CreateDBInstance",
-        Resource: "*",
-        Condition: {
-          "StringNotEquals": {
-            "aws:RequestedRegion": ALLOWED_REGIONS
-          }
-        }
-      },
-      {
-        Effect: "Deny",
-        Action: "rds:CreateDBInstance",
         Resource: "arn:aws:rds:*:*:db:*",
         Condition: {
           "Null": {
@@ -193,6 +151,81 @@ export const rdsCostControlPolicy = new aws.iam.GroupPolicy("rds-cost-control", 
     ]
   })
 });
+
+
+/////////////////////// Lambda Group /////////////////////////////////////////////////////////////////////////////
+
+export const lambdaGroup = new aws.iam.Group("lambda-group", {
+  name: "LambdaUsers",
+  path: "/service-groups/"
+});
+
+export const lambdaGroupPolicyAttachment = new aws.iam.GroupPolicyAttachment("lambda-group-policy", {
+  group: lambdaGroup.name,
+  policyArn: AWS_MANAGED_POLICIES.LAMBDA_FULL_ACCESS
+});
+
+
+export const lambdaTaggingPolicy = new aws.iam.GroupPolicy("lambda-tagging-policy", {
+  group: lambdaGroup.name,
+  policy: JSON.stringify({
+    Version: "2012-10-17",
+    Statement: [
+      {
+        Effect: "Deny",
+        Action: "lambda:CreateFunction",
+        Resource: "*",
+        Condition: {
+          "Null": {
+            "aws:RequestTag/CreatedBy": "true"
+          }
+        }
+      }
+    ]
+  })
+});
+
+
+
+/////////////////////// Billing Group /////////////////////////////////////////////////////////////////////////////
+
+export const billingGroup = new aws.iam.Group("billing-group", {
+  name: "BillingReadOnlyAccessUsers",
+  path: "/service-groups/"
+});
+
+export const billingGroupPolicyAttachment = new aws.iam.GroupPolicyAttachment("billing-group-policy", {
+  group: billingGroup.name,
+  policyArn: AWS_MANAGED_POLICIES.BILLING_READ_ONLY
+});
+
+//////////////////////// Universal restrictions group ////////////////////////////////////////////////////
+export const universalRestrictionsGroup = new aws.iam.Group("universal-restrictions-group", {
+  name: "UniversalRestrictions",
+  path: "/restrictions/"
+});
+
+
+// Universal region restriction policy - applies to ALL AWS services
+export const universalRegionPolicy = new aws.iam.GroupPolicy("universal-region-restriction", {
+  group: universalRestrictionsGroup.name,
+  policy: JSON.stringify({
+    Version: "2012-10-17",
+    Statement: [
+      {
+        Effect: "Deny",
+        Action: "*",
+        Resource: "*",
+        Condition: {
+          "StringNotEquals": {
+            "aws:RequestedRegion": ALLOWED_REGIONS
+          }
+        }
+      }
+    ]
+  })
+});
+
 
 // General cost control policy for all groups
 export const generalCostControlPolicy = new aws.iam.Policy("general-cost-control", {
@@ -236,7 +269,8 @@ export const serviceToGroup = {
   s3: s3Group,
   ecs: ecsGroup,
   rds: rdsGroup,
-  lambda: lambdaGroup
+  lambda: lambdaGroup,
+  regionRestriction: universalRestrictionsGroup
 } as const;
 
 export type ServiceName = keyof typeof serviceToGroup;
