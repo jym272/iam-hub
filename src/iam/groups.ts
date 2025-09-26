@@ -202,7 +202,7 @@ export const lambdaTaggingPolicy = new aws.iam.GroupPolicy("lambda-tagging-polic
 });
 
 /////////////////////// SST Group /////////////////////////////////////////////////////////////////////////////
-
+// https://sst.dev/docs/iam-credentials/#minimize-permissions
 export const sstGroup = new aws.iam.Group("sst-group", {
   name: "SSTUsers",
   path: "/service-groups/"
