@@ -45,7 +45,7 @@ export const teamMembersWithBudgets: TeamMemberWithBudget[] = [
   // },
   {
     username: "maria-gonzalez",
-    services: ["regionRestriction", "admin", "iamRestriction"],
+    services: ["regionRestriction", "admin", "iamRestriction", "instancesRestriction"],
     monthlyBudgetUSD: 200, // $200/month for serverless dev
     // Solo sirve para el tag de la creación de user
     environment: "development",

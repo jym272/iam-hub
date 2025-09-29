@@ -1,2 +1,2 @@
 // Export all IAM-related resources
-export * from "./groups";
+export * from "./groups/index.ts";

@@ -1,4 +1,7 @@
-import {adminGroup, iamRestrictionsGroup, instancesRestrictionsGroup, universalRestrictionsGroup} from "../../iam/groups";
+import {adminGroup} from "./admin.ts";
+import {iamRestrictionsGroup} from "./iam-restriction.ts";
+import {instancesRestrictionsGroup} from "./instance-restriction.ts";
+import {universalRestrictionsGroup} from "./region-restriction.ts";
 // https://docs.aws.amazon.com/aws-managed-policy/latest/reference/AmazonEC2ReadOnlyAccess.html
 
 export const serviceToGroup = {

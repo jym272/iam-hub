@@ -1,7 +1,7 @@
 import * as aws from "@pulumi/aws";
 import {teamMembersWithBudgets} from "../members.ts";
-import {serviceToGroup, billingGroup, type ServiceName} from "../iam/";
-import {generalCostControlPolicy} from "../policies";
+import {serviceToGroup, billingGroup, type ServiceName} from "../iam/index.ts";
+import {generalCostControlPolicy} from "../policies/index.ts";
 
 // Create account password policy for user-friendly passwords
 export const accountPasswordPolicy = new aws.iam.AccountPasswordPolicy("account-password-policy", {
