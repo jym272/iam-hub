@@ -5,21 +5,36 @@
   "private": true,
   "devDependencies": {
     "@types/bun": "latest",
+    "typescript-eslint": "^8.45.0",
+    "eslint": "^9.36.0",
+    "eslint-config-prettier": "^10.1.8",
+    "eslint-plugin-prettier": "^5.5.4",
+    "globals": "^16.4.0",
+    "prettier": "^3.6.2",
+    "prettier-plugin-sql": "^0.19.2",
+    "prettier-plugin-sh": "^0.17.4",
+    "@eslint/js": "^9.36.0",
+    "@eslint/json": "^0.12.0",
     "tsconfig-paths": "^4.2.0"
   },
   "scripts": {
+    "all": "bash ./scripts/all-quality-checks.sh",
     "setup": "pulumi login s3://gm2dev-pulumi-state",
     "deploy": "pulumi up",
     "plan": "pulumi preview",
+    "lint": "eslint --fix .",
+    "lint:check": "eslint .",
+    "format": "prettier --write \"**/*.{ts,md,yml,yaml,json,sh}\"",
+    "format:check": "prettier --check \"**/*.{ts,md,yml,yaml,json,sh}\"",
     "deploy:safe": "pulumi login s3://gm2dev-pulumi-state && pulumi up",
     "deploy:like-a-boss": "pulumi login s3://gm2dev-pulumi-state && pulumi up --yes",
     "type-check": "tsc --noEmit --project tsconfig.json"
   },
   "peerDependencies": {
-    "typescript": "^5"
+    "typescript": "^5.9.2"
   },
   "dependencies": {
     "@pulumi/aws": "^7.7.0",
-    "@pulumi/pulumi": "^3.197.0"
+    "@pulumi/pulumi": "^3.198.0"
   }
 }
