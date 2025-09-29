@@ -1,5 +1,5 @@
 // Enhanced team member interface with budget controls
-import type {ServiceName} from "@/iam";
+import type { ServiceName } from "@/iam";
 
 interface TeamMemberWithBudget {
   username: string;
@@ -49,7 +49,7 @@ export const teamMembersWithBudgets: TeamMemberWithBudget[] = [
     budgetAlerts: {
       warningThreshold: 85,
       criticalThreshold: 100,
-      emails: ["jym272@gmail.com"]
-    }
-  }
+      emails: ["jym272@gmail.com"],
+    },
+  },
 ];

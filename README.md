@@ -1,7 +1,8 @@
 # infra
-				.--.
-				|o_o|
-				|:_/|
+
+    			.--.
+    			|o_o|
+    			|:_/|
 
 `console`: https://309237749333.signin.aws.amazon.com/console
 
@@ -15,10 +16,9 @@ brew install pulumi
 brew install mise
 ```
 
-
 ### Recursos creados a "mano"
 
-*<small>primero la trampa, después el queso</small>*
+_<small>primero la trampa, después el queso</small>_
 
 - La activación de identity center en la región de us-east-2
 
@@ -80,7 +80,7 @@ export PULUMI_CONFIG_PASSPHRASE=gm2dev
 #Preview
 pulumi preview
 # Deploy
- pulumi up
+pulumi up
 # Get user credentials (access keys and secrets)
 pulumi stack output userCredentials --show-secrets --json
 
@@ -95,7 +95,9 @@ pulumi stack rm dev
 ```
 
 ### Password Policy
+
 The infrastructure creates an account password policy with the following requirements:
+
 - Minimum 8 characters
 - Must contain uppercase letters
 - Must contain lowercase letters
@@ -105,4 +107,4 @@ The infrastructure creates an account password policy with the following require
 - Password expires after 90 days
 - Cannot reuse last 3 passwords
 
-When changing from temporary password, use something like: `MyPassword123` 
+When changing from temporary password, use something like: `MyPassword123`

@@ -13,7 +13,6 @@ interface PolicyDocument {
 
 // Managed Policies https://docs.aws.amazon.com/aws-managed-policy/latest/reference/AmazonEC2FullAccess.html
 
-
 export const servicePermissions: Record<string, PolicyDocument> = {
   // TODO: hardcoded "services" key for now, it should be dynamic!
   s3: {
@@ -27,11 +26,11 @@ export const servicePermissions: Record<string, PolicyDocument> = {
           "s3:DeleteObject",
           "s3:ListBucket",
           "s3:GetBucketLocation",
-          "s3:ListAllMyBuckets"
+          "s3:ListAllMyBuckets",
         ],
-        Resource: ["arn:aws:s3:::*", "arn:aws:s3:::*/*"]
-      }
-    ]
+        Resource: ["arn:aws:s3:::*", "arn:aws:s3:::*/*"],
+      },
+    ],
   },
 
   ecs: {
@@ -63,11 +62,11 @@ export const servicePermissions: Record<string, PolicyDocument> = {
           "ecr:BatchGetImage",
           "logs:CreateLogGroup",
           "logs:CreateLogStream",
-          "logs:PutLogEvents"
+          "logs:PutLogEvents",
         ],
-        Resource: "*"
-      }
-    ]
+        Resource: "*",
+      },
+    ],
   },
 
   rds: {
@@ -75,15 +74,10 @@ export const servicePermissions: Record<string, PolicyDocument> = {
     Statement: [
       {
         Effect: "Allow",
-        Action: [
-          "rds:Describe*",
-          "rds:List*",
-          "rds:CreateDBSnapshot",
-          "rds:DeleteDBSnapshot"
-        ],
-        Resource: "*"
-      }
-    ]
+        Action: ["rds:Describe*", "rds:List*", "rds:CreateDBSnapshot", "rds:DeleteDBSnapshot"],
+        Resource: "*",
+      },
+    ],
   },
 
   lambda: {
@@ -102,11 +96,11 @@ export const servicePermissions: Record<string, PolicyDocument> = {
           "lambda:UpdateFunctionConfiguration",
           "logs:CreateLogGroup",
           "logs:CreateLogStream",
-          "logs:PutLogEvents"
+          "logs:PutLogEvents",
         ],
-        Resource: "*"
-      }
-    ]
+        Resource: "*",
+      },
+    ],
   },
   // TODO: tendrían que ser managed policies mejor, ya en createResourceLimitsPolicy existe ALLOWED_EC2_INSTANCES
   ec2: {
@@ -114,22 +108,20 @@ export const servicePermissions: Record<string, PolicyDocument> = {
     Statement: [
       {
         Effect: "Allow",
-        Action: [
-          "ec2:*",
-        ],
-        Resource: "*"
-      }
-    ]
-  }
-} satisfies Record<string, PolicyDocument> ;
+        Action: ["ec2:*"],
+        Resource: "*",
+      },
+    ],
+  },
+} satisfies Record<string, PolicyDocument>;
 
 export function createCombinedPolicy(services: string[]): string {
-  const statements = services.flatMap(service =>
-      servicePermissions[service as keyof typeof servicePermissions]?.Statement || []
+  const statements = services.flatMap(
+    (service) => servicePermissions[service as keyof typeof servicePermissions]?.Statement || [],
   );
 
   return JSON.stringify({
     Version: "2012-10-17",
-    Statement: statements
+    Statement: statements,
   });
 }
