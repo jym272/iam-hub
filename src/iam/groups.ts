@@ -14,7 +14,8 @@ const AWS_MANAGED_POLICIES = {
   RDS_FULL_ACCESS: "arn:aws:iam::aws:policy/AmazonRDSFullAccess",
   LAMBDA_FULL_ACCESS: "arn:aws:iam::aws:policy/AWSLambda_FullAccess",
   // Eventualmente todos los devs deberían poder ver sus gastos
-  BILLING_READ_ONLY: "arn:aws:iam::aws:policy/AWSBillingReadOnlyAccess"
+  BILLING_READ_ONLY: "arn:aws:iam::aws:policy/AWSBillingReadOnlyAccess",
+  ADMIN: "arn:aws:iam::aws:policy/AdministratorAccess"
 } as const;
 
 /////////////////////// EC2 GROUP /////////////////////////////////////////////////////////////////////////////
@@ -331,7 +332,7 @@ export const universalRestrictionsGroup = new aws.iam.Group("universal-restricti
 });
 
 
-// Universal region restriction policy - applies to ALL AWS services
+// Universal region restriction policy - applies to ALL AWS services except global services
 export const universalRegionPolicy = new aws.iam.GroupPolicy("universal-region-restriction", {
   group: universalRestrictionsGroup.name,
   policy: JSON.stringify({
@@ -339,7 +340,17 @@ export const universalRegionPolicy = new aws.iam.GroupPolicy("universal-region-r
     Statement: [
       {
         Effect: "Deny",
-        Action: "*",
+        NotAction: [
+          "iam:*",
+          "organizations:*",
+          "route53:*",
+          "cloudfront:*",
+          "support:*",
+          "budgets:*",
+          "aws-portal:*",
+          "shield:*",
+          "globalaccelerator:*"
+        ],
         Resource: "*",
         Condition: {
           "StringNotEquals": {
@@ -351,6 +362,7 @@ export const universalRegionPolicy = new aws.iam.GroupPolicy("universal-region-r
   })
 });
 
+//////////////////////// Some policies ////////////////////////////////////////////////////
 
 // General cost control policy for all groups
 export const generalCostControlPolicy = new aws.iam.Policy("general-cost-control", {
@@ -388,6 +400,81 @@ export const generalCostControlPolicy = new aws.iam.Policy("general-cost-control
   })
 });
 
+///////////////////////////   admin ////////////////////////////////////////////////
+export const adminGroup = new aws.iam.Group("admin-group", {
+  name: "AdminUsers",
+  path: "/service-groups/"
+});
+
+export const adminGroupPolicyAttachment = new aws.iam.GroupPolicyAttachment("admin-group-policy", {
+  group: adminGroup.name,
+  policyArn: AWS_MANAGED_POLICIES.ADMIN
+});
+
+/////////////////////////// iam restriction //////////////////////////////////////
+
+export const iamRestrictionsGroup = new aws.iam.Group("iam-restrictions-group", {
+  name: "IamRestrictions",
+  path: "/restrictions/"
+});
+
+
+export const iamRestrictionsPolicy = new aws.iam.GroupPolicy("iam-user-mgmt-restriction", {
+  group: iamRestrictionsGroup.name,
+  policy: JSON.stringify({
+    Version: "2012-10-17",
+    Statement: [
+      {
+        Sid: "DenyIAMUserManagement",
+        Effect: "Deny",
+        Action: [
+          // User actions
+          "iam:CreateUser",
+          "iam:DeleteUser",
+          "iam:UpdateUser",
+
+          // Group actions
+          "iam:CreateGroup",
+          "iam:DeleteGroup",
+          "iam:UpdateGroup",
+          "iam:AddUserToGroup",
+          "iam:RemoveUserFromGroup",
+
+          // Access Key actions
+          "iam:CreateAccessKey",
+          "iam:DeleteAccessKey",
+          "iam:UpdateAccessKey",
+
+          // Login Profile actions
+          "iam:CreateLoginProfile",
+          "iam:DeleteLoginProfile",
+          "iam:UpdateLoginProfile",
+
+          // Policy attachment actions
+          "iam:AttachUserPolicy",
+          "iam:DetachUserPolicy",
+          "iam:AttachGroupPolicy",
+          "iam:DetachGroupPolicy",
+          "iam:PutUserPolicy",
+          "iam:DeleteUserPolicy",
+          "iam:PutGroupPolicy",
+          "iam:DeleteGroupPolicy",
+
+          // Permissions boundary
+          "iam:PutUserPermissionsBoundary",
+          "iam:DeleteUserPermissionsBoundary",
+
+          // Tags
+          "iam:TagUser",
+          "iam:UntagUser"
+        ],
+        Resource: "*"
+      }
+    ]
+  })
+});
+
+
 // Map service names to groups for easy lookup
 export const serviceToGroup = {
   ec2: ec2Group,
@@ -396,7 +483,10 @@ export const serviceToGroup = {
   rds: rdsGroup,
   lambda: lambdaGroup,
   sst: sstGroup,
-  regionRestriction: universalRestrictionsGroup
+  regionRestriction: universalRestrictionsGroup,
+  // No deberían poder gestionar otros usuarios IAM, groups.
+  iamRestriction: iamRestrictionsGroup,
+  admin: adminGroup
 } as const;
 
 export type ServiceName = keyof typeof serviceToGroup;

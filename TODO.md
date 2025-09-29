@@ -40,3 +40,6 @@ Diagnostics:
   cada user individual podría tener policies más específicas.
 - Allowed regions no funciona, de todas formas por ahora no se necesita eso?.
 - Testar EC2 large instances en ecs
+- SE CAMBIA EL APPROACH https://claude.ai/chat/6e3902e5-c4b4-48e7-acd0-7e72589030a3
+- Admin, todos, restringo instancias grandes y restringo region. el control sería por VPC, se 
+  solicita incremento de vpc.
