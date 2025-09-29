@@ -1,6 +1,4 @@
 import * as aws from "@pulumi/aws";
-import * as pulumi from "@pulumi/pulumi";
-
 // Create SNS topic for budget alerts
 export const budgetAlertsTopic = new aws.sns.Topic("budget-alerts", {
   name: "budget-alerts-topic",
