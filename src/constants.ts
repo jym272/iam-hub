@@ -18,6 +18,22 @@ export const ALLOWED_EC2_INSTANCES = [
 export const ALLOWED_RDS_INSTANCES = [
   "db.t3.micro", "db.t2.micro"
 ];
+
+// ElastiCache instance types (Redis/Memcached)
+export const ALLOWED_ELASTICACHE_INSTANCES = [
+  "cache.t3.micro", "cache.t2.micro"
+];
+
+// OpenSearch/Elasticsearch instance types
+export const ALLOWED_OPENSEARCH_INSTANCES = [
+  "t3.small.search", "t2.small.search"
+];
+
+// Amazon MQ instance types (RabbitMQ/ActiveMQ)
+export const ALLOWED_MQ_INSTANCES = [
+  "mq.t3.micro"
+];
+
 export const FORECASTED_THRESHOLD = 100;
 
 

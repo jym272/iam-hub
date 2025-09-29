@@ -1,4 +1,5 @@
 import {ALLOWED_REGIONS, ALLOWED_EC2_INSTANCES, ALLOWED_RDS_INSTANCES} from "../constants.ts";
+import * as aws from "@pulumi/aws";
 
 // Function to create cost allocation tags policy
 export function createCostTrackingPolicy(username: string, costCenter: string): string {
@@ -120,3 +121,43 @@ export function createResourceLimitsPolicy(username: string): string {
     ]
   });
 }
+
+
+//////////////////////// Some policies ////////////////////////////////////////////////////
+
+// General cost control policy for all groups
+export const generalCostControlPolicy = new aws.iam.Policy("general-cost-control", {
+  name: "GeneralCostControl",
+  policy: JSON.stringify({
+    Version: "2012-10-17",
+    Statement: [
+      {
+        Effect: "Deny",
+        Action: [
+          "ec2:CreateVolume",
+          "ec2:ModifyVolume"
+        ],
+        Resource: "*",
+        Condition: {
+          "NumericGreaterThan": {
+            "ebs:VolumeSize": "100"
+          }
+        }
+      },
+      {
+        Effect: "Deny",
+        Action: [
+          "cloudfront:CreateDistribution",
+          "route53:CreateHostedZone",
+          "elasticloadbalancing:CreateLoadBalancer",
+          "rds:CreateDBCluster",
+          "redshift:CreateCluster",
+          "es:CreateElasticsearchDomain",
+          "es:CreateDomain"
+        ],
+        Resource: "*"
+      }
+    ]
+  })
+});
+
