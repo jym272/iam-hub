@@ -5,7 +5,6 @@ interface TeamMemberWithBudget {
   username: string;
   services: ServiceName[];
   monthlyBudgetUSD: number;
-  environment: string;
   needsConsoleAccess?: boolean;
   needsAccessKey?: boolean;
   budgetAlerts?: {
@@ -21,7 +20,6 @@ export const teamMembersWithBudgets: TeamMemberWithBudget[] = [
   //   username: "jorge-clavijo",
   //   services: ["s3", "ecs", "rds", "lambda", "ec2"],
   //   monthlyBudgetUSD: 1000, // $1000/month
-  //   environment: "production",
   //   needsConsoleAccess: true,
   //   needsAccessKey: true,
   //   budgetAlerts: {
@@ -34,7 +32,6 @@ export const teamMembersWithBudgets: TeamMemberWithBudget[] = [
   //   username: "luciano-carrera",
   //   services: ["ecs", "s3"],
   //   monthlyBudgetUSD: 300, // $300/month - limited budget for dev
-  //   environment: "development",
   //   needsConsoleAccess: true,
   //   needsAccessKey: false,
   //   budgetAlerts: {
@@ -47,8 +44,6 @@ export const teamMembersWithBudgets: TeamMemberWithBudget[] = [
     username: "maria-gonzalez",
     services: ["regionRestriction", "admin", "iamRestriction", "instancesRestriction"],
     monthlyBudgetUSD: 200, // $200/month for serverless dev
-    // Solo sirve para el tag de la creación de user
-    environment: "development",
     needsConsoleAccess: true,
     needsAccessKey: true,
     budgetAlerts: {

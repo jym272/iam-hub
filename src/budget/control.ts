@@ -24,7 +24,6 @@ export const teamResourcesWithBudgets = teamMembersWithBudgets.map(member => {
     name: member.username,
     path: "/",
     tags: {
-      Environment: member.environment,
       MonthlyBudget: member.monthlyBudgetUSD.toString(),
       CreatedBy: member.username,
       BudgetTracking: "enabled"
