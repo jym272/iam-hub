@@ -27,5 +27,7 @@ jobs:
     permissions:
       contents: write
       pull-requests: write
+      # TODO: delete me, just for test
+      id-token: write
     uses: ./.github/workflows/code-quality-check.yml
     secrets: inherit
