@@ -58,6 +58,7 @@ jobs:
         run: |
           pulumi login s3://gm2dev-pulumi-state
           pulumi stack select dev
+          eval "$(/home/linuxbrew/.linuxbrew/bin/brew shellenv)"
           bunx pulumi preview
       - name: Pulumi Preview
         uses: pulumi/actions@v6
