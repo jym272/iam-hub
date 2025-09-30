@@ -54,13 +54,18 @@ jobs:
 
       - name: Install dependencies
         run: bun install
+      - name: Pulumi Login
+        run: |
+          pulumi login s3://gm2dev-pulumi-state
+          pulumi stack select dev
+          bunx pulumi preview
       - name: Pulumi Preview
         uses: pulumi/actions@v6
         with:
           command: preview
+          pulumi-version: latest
           stack-name: dev
           comment-on-pr: true
           comment-on-summary: true
         env:
           PULUMI_BACKEND_URL: s3://gm2dev-pulumi-state
-          PULUMI_NODEJS_TRANSPILE_ONLY: "true"
