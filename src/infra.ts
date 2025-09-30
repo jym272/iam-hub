@@ -1,20 +1,19 @@
 // "The hardest choices require the strongest wills."
-
 import { teamResourcesWithBudgets } from "./budget/index.ts";
-export * from "./iam/index.ts";
 import { teamMembersWithBudgets } from "./members.ts";
 import { createGitHubOIDCProvider } from "./identity-provider/index.ts";
 import { githubOIDCConfig } from "./identity-provider/config.ts";
-import { pulumiSecretsKey, pulumiSecretsAlias } from "./kms.ts";
+import { createKms } from "./kms.ts";
+// import { pulumiSecretsKey, pulumiSecretsAlias } from "./kms.ts";
 
-export const budgetSummary = teamResourcesWithBudgets.map(({ /*userBudget,*/ memberConfig }) => ({
+const budgetSummary = teamResourcesWithBudgets.map(({ /*userBudget,*/ memberConfig }) => ({
   username: memberConfig.username,
   monthlyBudget: memberConfig.monthlyBudgetUSD,
   // budgetArn: userBudget.arn,
   services: memberConfig.services,
 }));
 
-export const userCredentials = teamResourcesWithBudgets
+const userCredentials = teamResourcesWithBudgets
   .filter(({ accessKey }) => accessKey)
   .map(({ accessKey, memberConfig }) => ({
     username: memberConfig.username,
@@ -22,7 +21,7 @@ export const userCredentials = teamResourcesWithBudgets
     secretAccessKey: accessKey!.secret,
   }));
 
-export const consoleAccess = teamResourcesWithBudgets
+const consoleAccess = teamResourcesWithBudgets
   .filter(({ loginProfile }) => loginProfile)
   .map(({ loginProfile, memberConfig }) => ({
     username: memberConfig.username,
@@ -32,27 +31,20 @@ export const consoleAccess = teamResourcesWithBudgets
     consoleLoginUrl: "https://309237749333.signin.aws.amazon.com/console",
   }));
 
-export const totalTeamBudget = teamMembersWithBudgets.reduce((sum, member) => sum + member.monthlyBudgetUSD, 0);
+const totalTeamBudget = teamMembersWithBudgets.reduce((sum, member) => sum + member.monthlyBudgetUSD, 0);
 
 // GitHub OIDC Identity Provider for GitHub Actions
-const githubOIDC = createGitHubOIDCProvider(githubOIDCConfig);
+createGitHubOIDCProvider(githubOIDCConfig);
 
-export const githubOIDCProviderArn = githubOIDC.providerArn;
-export const githubActionsRoleArns = githubOIDC.roleArns;
+// KMS Key for Pulumi secrets encryption
+createKms();
 
-// KMS key for Pulumi secrets encryption (replaces passphrase)
-export const kmsKeyId = pulumiSecretsKey.id;
-export const kmsKeyArn = pulumiSecretsKey.arn;
-export const kmsAliasName = pulumiSecretsAlias.name;
+//  const dashboardUrl = pulumi.interpolate`https://console.aws.amazon.com/cloudwatch/home?region=us-east-1#dashboards:name=${costDashboard.dashboardName}`;
 
-// export const dashboardUrl = pulumi.interpolate`https://console.aws.amazon.com/cloudwatch/home?region=us-east-1#dashboards:name=${costDashboard.dashboardName}`;
-
+// Hasta un mejor refactor, esto servirá, TODO: hacer algo similar a sst
 console.table({
-  // ...budgetSummary,
-});
-
-console.table({
-  // totalTeamBudget,
-  // costTrackingTags,
-  // dashboardUrl,
+  totalTeamBudget,
+  consoleAccess,
+  userCredentials,
+  budgetSummary,
 });

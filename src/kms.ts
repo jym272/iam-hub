@@ -21,3 +21,10 @@ export const pulumiSecretsAlias = new aws.kms.Alias("pulumi-secrets-alias", {
   name: "alias/pulumi-secrets",
   targetKeyId: pulumiSecretsKey.id,
 });
+
+export const createKms = () => {
+  return {
+    pulumiSecretsKey,
+    pulumiSecretsAlias,
+  };
+};

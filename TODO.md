@@ -43,4 +43,4 @@ Diagnostics:
 - SE CAMBIA EL APPROACH https://claude.ai/chat/6e3902e5-c4b4-48e7-acd0-7e72589030a3
 - Admin, todos, restringo instancias grandes y restringo region. el control sería por VPC, se
   solicita incremento de vpc.
-- Actulizar claude
+- AGREGAR REGION A LOS USERS/MEMBERS, cada user elige sus regiones!
