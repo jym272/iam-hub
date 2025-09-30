@@ -193,7 +193,7 @@ export const githubOIDCConfig: GitHubOIDCProviderConfig = {
       id: "infrastructure-admin-cd",
       description: "Admin role for infrastructure deployment",
       policies: [
-        "AdministratorAccess",  // AWS managed policy
+        "AdministratorAccess", // AWS managed policy
         // "arn:aws:iam::123:policy/custom",  // Custom policy with full ARN
       ],
       repositories: ["infrastructure", "terraform-modules"],
@@ -209,6 +209,7 @@ export const githubOIDCConfig: GitHubOIDCProviderConfig = {
 ### Role Configuration
 
 Each role supports:
+
 - **id**: Unique identifier (role name becomes `github-actions-{id}`)
 - **description**: Human-readable purpose
 - **policies**: Array of AWS managed policy names OR full ARNs for custom policies
@@ -217,6 +218,7 @@ Each role supports:
 ### Trust Policy
 
 Automatically generated with:
+
 - **Subject condition**: `repo:{org}/{repo}:*` (allows all branches, tags, PRs from specified repos)
 - **Audience**: `sts.amazonaws.com` (standard for AWS)
 - **Provider thumbprint**: GitHub's OIDC thumbprint (hardcoded, verified)
@@ -225,7 +227,7 @@ Automatically generated with:
 
 ```yaml
 permissions:
-  id-token: write  # Required for OIDC
+  id-token: write # Required for OIDC
   contents: read
 
 jobs:
@@ -235,7 +237,7 @@ jobs:
       - name: Configure AWS Credentials
         uses: aws-actions/configure-aws-credentials@v4
         with:
-          role-to-assume: ${{ secrets.AWS_ROLE_ARN }}  # e.g., arn:aws:iam::123:role/github-actions-infrastructure-admin-cd
+          role-to-assume: ${{ secrets.AWS_ROLE_ARN }} # e.g., arn:aws:iam::123:role/github-actions-infrastructure-admin-cd
           aws-region: sa-east-1
 
       - name: Deploy
@@ -261,11 +263,13 @@ jobs:
 ### Policy Support
 
 **AWS Managed Policies** (auto-resolved):
+
 - `"AdministratorAccess"`
 - `"AmazonEC2ContainerRegistryPowerUser"`
 - Any AWS managed policy name
 
 **Custom Managed Policies** (requires full ARN):
+
 - `"arn:aws:iam::123456789012:policy/my-custom-policy"`
 
 The module automatically detects which format you're using by checking if the string starts with `"arn:"`.
