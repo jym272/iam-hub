@@ -1,0 +1,13 @@
+name: CI project
+
+on:
+  push:
+    branches: ["main"]
+
+jobs:
+  code_quality_check:
+    permissions:
+      contents: write
+      pull-requests: write
+    uses: ./.github/workflows/code-quality-check.yml
+    secrets: inherit
