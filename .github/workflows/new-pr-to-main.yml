@@ -58,19 +58,8 @@ jobs:
 
       - name: Install dependencies
         run: |
-          node --version
           bun install
-      - name: Pulumi Login
-        run: |
-          pulumi login s3://gm2dev-pulumi-state
-          pulumi stack select dev
-          #eval "$(/home/linuxbrew/.linuxbrew/bin/brew shellenv)"
-          #echo $PATH
-          #which node
-          #brew install pulumi
-          #brew install nodejs
-          #which node
-          bunx pulumi preview
+
       - name: Pulumi Preview
         uses: pulumi/actions@v6
         with:
