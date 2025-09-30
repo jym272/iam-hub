@@ -46,18 +46,19 @@ This is a Pulumi-based AWS infrastructure project that implements comprehensive 
 ### Development
 
 - **Type checking**: `bun run type-check`
-- **Pulumi preview**: `PULUMI_CONFIG_PASSPHRASE=gm2dev pulumi preview`
-- **Pulumi deploy**: `PULUMI_CONFIG_PASSPHRASE=gm2dev pulumi up`
+- **Pulumi preview**: `pulumi preview`
+- **Pulumi deploy**: `pulumi up`
 - **Quick deployment**: `bun run deploy:like-a-boss` (auto-login + deploy)
 
 ### Stack Management
 
 - **List stacks**: `pulumi stack ls`
 - **Switch stack**: `pulumi stack select <stack-name>`
-- **Get user credentials**: `PULUMI_CONFIG_PASSPHRASE=gm2dev pulumi stack output userCredentials --show-secrets --json`
-- **Get console access**: `PULUMI_CONFIG_PASSPHRASE=gm2dev pulumi stack output consoleAccess --show-secrets --json`
-- **Get GitHub OIDC provider ARN**: `PULUMI_CONFIG_PASSPHRASE=gm2dev pulumi stack output githubOIDCProviderArn`
-- **Get GitHub Actions role ARNs**: `PULUMI_CONFIG_PASSPHRASE=gm2dev pulumi stack output githubActionsRoleArns --json`
+- **Get user credentials**: `pulumi stack output userCredentials --show-secrets --json`
+- **Get console access**: `pulumi stack output consoleAccess --show-secrets --json`
+- **Get GitHub OIDC provider ARN**: `pulumi stack output githubOIDCProviderArn`
+- **Get GitHub Actions role ARNs**: `pulumi stack output githubActionsRoleArns --json`
+- **Get KMS key info**: `pulumi stack output kmsKeyArn`
 
 ### Package Scripts (package.json)
 
@@ -256,7 +257,7 @@ jobs:
 1. Edit `src/identity-provider/config.ts`
 2. Add new role to `roles` array
 3. Run `bun run type-check` to verify types
-4. Deploy with `PULUMI_CONFIG_PASSPHRASE=gm2dev pulumi up`
+4. Deploy with `pulumi up`
 5. Get role ARN: `pulumi stack output githubActionsRoleArns --json`
 6. Add ARN as GitHub secret: `AWS_ROLE_ARN` (or custom name)
 
@@ -308,7 +309,7 @@ The module automatically detects which format you're using by checking if the st
 ### User Credentials
 
 ```bash
-PULUMI_CONFIG_PASSPHRASE=gm2dev pulumi stack output userCredentials --show-secrets --json
+pulumi stack output userCredentials --show-secrets --json
 ```
 
 Returns: `{ username, accessKeyId, secretAccessKey }[]`
@@ -316,7 +317,7 @@ Returns: `{ username, accessKeyId, secretAccessKey }[]`
 ### Console Access
 
 ```bash
-PULUMI_CONFIG_PASSPHRASE=gm2dev pulumi stack output consoleAccess --show-secrets --json
+pulumi stack output consoleAccess --show-secrets --json
 ```
 
 Returns: `{ username, temporaryPassword, passwordResetRequired, consoleLoginUrl }[]`
@@ -328,7 +329,7 @@ Available in `infra.ts` export for programmatic access.
 ### GitHub OIDC Provider ARN
 
 ```bash
-PULUMI_CONFIG_PASSPHRASE=gm2dev pulumi stack output githubOIDCProviderArn
+pulumi stack output githubOIDCProviderArn
 ```
 
 Returns: `arn:aws:iam::ACCOUNT_ID:oidc-provider/token.actions.githubusercontent.com`
@@ -336,18 +337,26 @@ Returns: `arn:aws:iam::ACCOUNT_ID:oidc-provider/token.actions.githubusercontent.
 ### GitHub Actions Role ARNs
 
 ```bash
-PULUMI_CONFIG_PASSPHRASE=gm2dev pulumi stack output githubActionsRoleArns --json
+pulumi stack output githubActionsRoleArns --json
 ```
 
 Returns: `{ "role-id": "arn:aws:iam::ACCOUNT_ID:role/github-actions-role-id", ... }`
 
+### KMS Key ARN
+
+```bash
+pulumi stack output kmsKeyArn
+```
+
+Returns: `arn:aws:kms:sa-east-1:ACCOUNT_ID:key/KEY_ID`
+
 ## Deployment Checklist
 
 1. ✅ Run `bun run type-check` - must pass
-2. ✅ Run `PULUMI_CONFIG_PASSPHRASE=gm2dev pulumi preview` - review resources
+2. ✅ Run `pulumi preview` - review resources
 3. ✅ Verify all team member emails are correct in `src/members.ts`
 4. ✅ Check budget amounts and service arrays
-5. ✅ Deploy with `PULUMI_CONFIG_PASSPHRASE=gm2dev pulumi up`
+5. ✅ Deploy with `pulumi up`
 6. ✅ Verify user credentials output
 7. ✅ Test group memberships in AWS Console
 
@@ -429,19 +438,22 @@ Returns: `{ "role-id": "arn:aws:iam::ACCOUNT_ID:role/github-actions-role-id", ..
 bun run type-check
 
 # Preview changes
-PULUMI_CONFIG_PASSPHRASE=gm2dev pulumi preview
+pulumi preview
 
 # Deploy (with confirmation)
-PULUMI_CONFIG_PASSPHRASE=gm2dev pulumi up
+pulumi up
 
 # Deploy (auto-confirm)
 bun run deploy:like-a-boss
 
 # Get credentials
-PULUMI_CONFIG_PASSPHRASE=gm2dev pulumi stack output userCredentials --show-secrets --json
+pulumi stack output userCredentials --show-secrets --json
 
 # Get console access
-PULUMI_CONFIG_PASSPHRASE=gm2dev pulumi stack output consoleAccess --show-secrets --json
+pulumi stack output consoleAccess --show-secrets --json
+
+# Get KMS key ARN
+pulumi stack output kmsKeyArn
 ```
 
 ### Current Architecture Priorities

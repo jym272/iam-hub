@@ -144,10 +144,10 @@ githubActionsRoleArns: {
 
 ```bash
 # Get OIDC provider ARN
-PULUMI_CONFIG_PASSPHRASE=gm2dev pulumi stack output githubOIDCProviderArn
+pulumi stack output githubOIDCProviderArn
 
 # Get all role ARNs (JSON)
-PULUMI_CONFIG_PASSPHRASE=gm2dev pulumi stack output githubActionsRoleArns --json
+pulumi stack output githubActionsRoleArns --json
 ```
 
 #### Configuration (`src/identity-provider/config.ts`):
@@ -548,7 +548,7 @@ teamMembersWithBudgets = [
 
 ### 4.1 Pulumi Preview Results
 
-**Command:** `PULUMI_CONFIG_PASSPHRASE=gm2dev pulumi preview`
+**Command:** `pulumi preview`
 
 **Resources (Last Preview):**
 
@@ -704,9 +704,9 @@ teamMembersWithBudgets = [
    - **Risk:** Cost overruns not automatically stopped
    - **Mitigation:** SNS alerts configured, manual monitoring
 
-3. **Hardcoded Passphrase:** `PULUMI_CONFIG_PASSPHRASE=gm2dev`
-   - **Risk:** Visible in commands, scripts
-   - **Recommendation:** Move to secure secret management (AWS Secrets Manager, HashiCorp Vault)
+3. ~~**Hardcoded Passphrase:** `PULUMI_CONFIG_PASSPHRASE=gm2dev`~~ **[RESOLVED]**
+   - **Solution:** Migrated to AWS KMS for secrets encryption
+   - **Benefits:** No passphrase needed, IAM-based access, automatic key rotation
 
 ---
 
@@ -723,8 +723,10 @@ teamMembersWithBudgets = [
 - SNS topic: **~$0.50/month** (if no messages)
 - Lambda (disabled): **$0**
 - Budgets (disabled): **$0**
+- KMS key: **$1/month** (single key, automatic rotation enabled)
+- OIDC provider: **Free**
 
-**Estimated Total:** **< $1/month** for infrastructure itself.
+**Estimated Total:** **~$1.50/month** for infrastructure itself.
 
 **Note:** User workloads (EC2, S3, etc.) will consume the $200 budget.
 
@@ -787,9 +789,9 @@ teamMembersWithBudgets = [
 
 ### 9.3 Long-Term (Next Quarter)
 
-7. **Secret Management:**
-   - Migrate `PULUMI_CONFIG_PASSPHRASE` to AWS Secrets Manager
-   - Use IAM roles for CI/CD instead of access keys
+7. ~~**Secret Management:**~~ **[COMPLETED]**
+   - ✅ Migrated to AWS KMS for Pulumi secrets encryption
+   - ✅ GitHub Actions OIDC authentication (no access keys needed for CI/CD)
 
 8. **Monitoring & Alerting:**
    - CloudWatch alarms for cost anomalies

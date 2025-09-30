@@ -70,14 +70,18 @@ aws s3 mb s3://gm2dev-pulumi-state
 ```shell
 # Inicializar proyecto
 pulumi login s3://gm2dev-pulumi-state
-# Inicializar stack, se usa passphrase "gm2dev" -> TODO: mejorar esto, es secreto de secretos!
+# Inicializar stack
 pulumi stack init dev
+
+# Configure AWS KMS for secrets encryption (no passphrase needed!)
+# Note: KMS key is created automatically by the Pulumi code
+# After first deployment, switch to KMS with:
+# pulumi stack change-secrets-provider "awskms://alias/pulumi-secrets?region=sa-east-1"
 
 # Type check
 bun run type-check
 
-export PULUMI_CONFIG_PASSPHRASE=gm2dev
-#Preview
+# Preview (no passphrase needed with KMS)
 pulumi preview
 # Deploy
 pulumi up
@@ -93,6 +97,17 @@ pulumi destroy
 # destroy stack
 pulumi stack rm dev
 ```
+
+#### Secrets Provider: AWS KMS
+
+This project uses **AWS KMS** for secrets encryption instead of a passphrase. Benefits:
+
+- ✅ No passphrase to remember or store
+- ✅ IAM-based access control
+- ✅ Automatic key rotation enabled
+- ✅ Better security for production
+
+The KMS key (`alias/pulumi-secrets`) is created automatically by the infrastructure code.
 
 ### Password Policy
 
