@@ -8,7 +8,7 @@
 
 ## Executive Summary
 
-This infrastructure project implements a sophisticated IAM group-based budget control system using Pulumi and AWS. The current deployment consists of **production-ready code** with **4 IAM restriction groups**, **1 admin group**, **1 billing group**, **1 GitHub OIDC identity provider**, **3 GitHub Actions IAM roles**, and **1 active user** (maria-gonzalez) with a $200/month budget. The system enforces strict regional restrictions (sa-east-1 only), instance type limitations, comprehensive cost controls through IAM policies, and keyless CI/CD authentication for GitHub Actions.
+This infrastructure project implements a sophisticated IAM group-based budget control system using Pulumi and AWS. The current deployment consists of **production-ready code** with **3 IAM restriction groups**, **1 admin group**, **1 billing group**, **1 per-user region restriction group**, **1 GitHub OIDC identity provider**, **3 GitHub Actions IAM roles**, and **1 active user** (maria-gonzalez) with a $200/month budget. The system enforces per-user regional restrictions, instance type limitations, comprehensive cost controls through IAM policies, and keyless CI/CD authentication for GitHub Actions.
 
 **Key Finding:** The codebase contains a mix of:
 
@@ -51,26 +51,31 @@ This infrastructure project implements a sophisticated IAM group-based budget co
      - Amazon MQ: mq.t3.micro
    - Status: DEPLOYED
 
-5. **UniversalRestrictions** (`region-restriction.ts`)
-   - **CRITICAL:** Restricts ALL AWS services to `sa-east-1` only
-   - Exempts global services (IAM, Route53, CloudFront, etc.)
-   - Uses `NotAction` with regional condition
-   - Status: DEPLOYED
-
 #### Group Mapping (`groups.ts`)
 
 ```typescript
 serviceToGroup = {
-  regionRestriction: universalRestrictionsGroup, // ✅ DEPLOYED
   iamRestriction: iamRestrictionsGroup, // ✅ DEPLOYED
   instancesRestriction: instancesRestrictionsGroup, // ✅ DEPLOYED
   admin: adminGroup, // ✅ DEPLOYED
 };
 ```
 
+#### Per-User Region Restrictions (`region-restriction.ts`)
+
+**Status:** ✅ PRODUCTION - Dynamic per-user groups
+
+- **Function**: `createUserRegionRestrictionGroup(username, allowedRegions)`
+- **Creates**: User-specific IAM group with custom region policy
+- **Policy**: Restricts ALL AWS services to specified regions
+- **Exempts**: Global services (IAM, Route53, CloudFront, etc.)
+- **Uses**: `NotAction` with `StringNotEquals` on `aws:RequestedRegion`
+- **Naming**: `RegionRestriction-{username}`
+- **Status**: DEPLOYED (when user has `regions` parameter)
+
 **Current User Assignment:**
 
-- `maria-gonzalez`: All 4 restrictions + admin (100% coverage)
+- `maria-gonzalez`: admin + iamRestriction + instancesRestriction + RegionRestriction-maria-gonzalez (sa-east-1 only)
 
 ---
 
@@ -223,6 +228,7 @@ jobs:
 
 - Creates IAM users with cost tracking tags
 - Automatic group membership based on `services` array
+- **NEW**: Per-user region restriction groups created when `regions` parameter is specified
 - Password policy enforcement (8+ chars, mixed case + numbers)
 - Optional console access (login profile)
 - Optional programmatic access (access keys)
@@ -233,12 +239,12 @@ jobs:
 - `MonthlyBudget`: User's budget amount
 - `CreatedBy`: Username
 - `BudgetTracking`: "enabled"
-- ~~`Environment`~~: **REMOVED** (just completed refactor)
 
 **Deployed Resources:**
 
 - 1 IAM user: `maria-gonzalez`
-- 4 group memberships (one per restriction group)
+- 3 service group memberships (admin, iamRestriction, instancesRestriction)
+- 1 per-user region restriction group + membership (RegionRestriction-maria-gonzalez)
 - 1 billing group membership
 - 1 login profile (console access)
 - 1 access key (programmatic access)
@@ -328,11 +334,11 @@ teamMembersWithBudgets = [
 **Console Table Output:**
 
 ```
-┌─────────┬──────────────────┬───────────────┬─────────────────────────────┐
-│ (index) │ username         │ monthlyBudget │ services                    │
-├─────────┼──────────────────┼───────────────┼─────────────────────────────┤
-│ 0       │ 'maria-gonzalez' │ 200           │ [ 'regionRestriction', ...] │
-└─────────┴──────────────────┴───────────────┴─────────────────────────────┘
+┌─────────┬──────────────────┬───────────────┬──────────────────────────────────────────────┬─────────────────┐
+│ (index) │ username         │ monthlyBudget │ services                                     │ regions         │
+├─────────┼──────────────────┼───────────────┼──────────────────────────────────────────────┼─────────────────┤
+│ 0       │ 'maria-gonzalez' │ 200           │ [ 'admin', 'iamRestriction', 'instances...' ]│ [ 'sa-east-1' ] │
+└─────────┴──────────────────┴───────────────┴──────────────────────────────────────────────┴─────────────────┘
 ```
 
 **TODO Note:** Line 28 has hardcoded AWS account ID in console URL.
@@ -346,7 +352,8 @@ teamMembersWithBudgets = [
 **Deployed Values:**
 
 - `ADMIN_EMAILS`: ["jorge.clavijo@gm2dev.com"]
-- `ALLOWED_REGIONS`: ["sa-east-1"] ⚠️ STRICT
+- `ALLOWED_REGIONS`: ["sa-east-1"] ⚠️ Used as default reference (per-user now)
+- `Region` type: Type-safe region validation exported for member configuration
 - `ALLOWED_EC2_INSTANCES`: 12 instance types (t2/t3/t3a/t4g nano/micro/small)
 - `ALLOWED_RDS_INSTANCES`: ["db.t3.micro", "db.t2.micro"]
 - `ALLOWED_ELASTICACHE_INSTANCES`: ["cache.t3.micro", "cache.t2.micro"]
@@ -668,17 +675,20 @@ teamMembersWithBudgets = [
 
 ---
 
-### ADR 4: Region Lock to sa-east-1
+### ADR 4: Per-User Region Restrictions (LATEST)
 
-**Decision:** Restrict ALL AWS services to South America São Paulo region.
+**Decision:** Replace global region lock with per-user region configuration.
 
 **Rationale:**
 
-- Cost optimization (closer to users)
-- Data sovereignty compliance
-- Simpler cost tracking
+- Flexibility for different team members with different requirements
+- Some users may need multi-region access
+- Maintains cost control while allowing exceptions
+- Each user gets their own IAM group with custom region policy
 
-**Evidence:** Commit dd54226, deployed in `UniversalRestrictions` group
+**Evidence:** Current implementation in `region-restriction.ts`, `control.ts`, `members.ts`
+
+**Previous:** ADR 4 originally enforced sa-east-1 globally (commit dd54226) - now superseded
 
 ---
 
@@ -687,7 +697,7 @@ teamMembersWithBudgets = [
 ### 7.1 Implemented Controls ✅
 
 1. **IAM Restrictions:** Users cannot modify IAM (prevent privilege escalation)
-2. **Region Restrictions:** Only sa-east-1 allowed (prevent accidental high-cost regions)
+2. **Region Restrictions:** Per-user custom region policies (flexible cost control)
 3. **Instance Restrictions:** Free-tier and small instances only
 4. **Service Blocks:** Expensive services (CloudFront, Redshift) denied
 5. **Volume Limits:** EBS volumes capped at 100GB

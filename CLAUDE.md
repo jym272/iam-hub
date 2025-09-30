@@ -8,11 +8,10 @@ This is a Pulumi-based AWS infrastructure project that implements comprehensive 
 
 ### Advanced Group-Based IAM System (`src/iam/`)
 
-- **Service Groups**: EC2Users, S3Users, ECSUsers, RDSUsers, LambdaUsers, BillingReadOnlyAccessUsers, UniversalRestrictions
-- **AWS Managed Policies**: Uses production-ready AWS managed policies for each service
-- **Universal Region Restrictions**: All services restricted to sa-east-1 only via UniversalRestrictions group
-- **Service-Specific Cost Controls**: Instance type restrictions, volume limits, and expensive service blocks
-- **Selective Tagging Enforcement**: Strategic tagging requirements (removed from EC2 for UX, kept for S3/RDS/Lambda)
+- **Service Groups**: AdminUsers, IamRestrictions, InstancesRestrictions, BillingReadOnlyAccessUsers
+- **AWS Managed Policies**: Uses production-ready AWS managed policies for admin and billing access
+- **Per-User Region Restrictions**: Users can have custom region restrictions via `regions` parameter
+- **Service-Specific Cost Controls**: Instance type restrictions, volume limits, and IAM operation blocks
 - **Billing Transparency**: All users get read-only billing access for cost awareness
 
 ### Enhanced Budget Control System (`src/budget/`)
@@ -70,13 +69,11 @@ This is a Pulumi-based AWS infrastructure project that implements comprehensive 
 
 ### Security & Cost Controls
 
-- **Group-Based Permissions**: Users inherit service permissions through IAM groups
-- **AWS Managed Policies**: Production-ready policies (AmazonEC2FullAccess, AmazonS3FullAccess, etc.)
-- **Universal Region Restrictions**: ALL AWS services limited to **sa-east-1 only** via global policy
-- **Strategic Tagging**: Required for S3 buckets, RDS instances, and Lambda functions (EC2 tagging removed for UX)
+- **Group-Based Permissions**: Users inherit permissions through IAM restriction groups
+- **AWS Managed Policies**: Production-ready policies (AdministratorAccess, AWSBillingReadOnlyAccess)
+- **Per-User Region Restrictions**: Each user can have custom allowed regions or no restrictions (via `regions` parameter)
 - **Instance Type Restrictions**: t2/t3/t3a/t4g nano/micro/small only for EC2 and RDS (expanded ARM support)
-- **EBS Volume Limits**: 100GB maximum volume size across all services
-- **Expensive Service Blocks**: CloudFront, Route53, Load Balancers, RDS clusters, Redshift, Elasticsearch
+- **IAM Operation Restrictions**: Prevents user/group management and privilege escalation
 - **User-Friendly Passwords**: 8+ chars, mixed case + numbers, symbols optional (not required)
 
 ### Budget Enforcement
@@ -144,11 +141,11 @@ src/
 ```typescript
 interface TeamMemberWithBudget {
   username: string;
-  services: ServiceName[]; // 🆕 Array of required services
+  services: ServiceName[]; // Array of required restriction/permission groups
   monthlyBudgetUSD: number;
-  environment: string;
-  needsConsoleAccess?: boolean; // 🆕 Optional console access
-  needsAccessKey?: boolean; // 🆕 Optional programmatic access
+  needsConsoleAccess?: boolean; // Optional console access
+  needsAccessKey?: boolean; // Optional programmatic access
+  regions?: Region[]; // 🆕 Per-user region restrictions (undefined = no restrictions)
   budgetAlerts?: {
     warningThreshold: number;
     criticalThreshold: number;
@@ -159,13 +156,19 @@ interface TeamMemberWithBudget {
 
 ### Service Groups Available - UPDATED 🔄
 
-- `"ec2"` → EC2Users group (full EC2 access + instance type restrictions, **NO TAGGING required**)
-- `"s3"` → S3Users group (full S3 access + **MANDATORY CreatedBy tagging**)
-- `"ecs"` → ECSUsers group (full ECS access + EC2 instance type restrictions)
-- `"rds"` → RDSUsers group (full RDS access + instance class restrictions + **MANDATORY CreatedBy tagging**)
-- `"lambda"` → LambdaUsers group (full Lambda access + **MANDATORY CreatedBy tagging**)
-- `"regionRestriction"` → UniversalRestrictions group (**ALL services limited to sa-east-1**)
+- `"admin"` → AdminUsers group (AdministratorAccess AWS managed policy)
+- `"iamRestriction"` → IamRestrictions group (denies IAM user/group management)
+- `"instancesRestriction"` → InstancesRestrictions group (enforces t2/t3/t3a/t4g nano/micro/small only)
 - **Automatic**: All users get BillingReadOnlyAccess and GeneralCostControl policies
+
+### Region Restrictions - NEW 🆕
+
+Region restrictions are now **per-user** instead of global:
+
+- **`regions: ["sa-east-1"]`** → Creates user-specific region restriction group
+- **`regions: undefined`** → No region restrictions applied
+- Each user gets their own `RegionRestriction-{username}` group with custom policy
+- Applies to ALL AWS services except global services (IAM, Route53, CloudFront, etc.)
 
 ## GitHub OIDC Identity Provider Configuration
 
@@ -319,8 +322,9 @@ The module automatically detects which format you're using by checking if the st
 ### Group Management
 
 - Users are automatically added to groups based on `services` array
+- Per-user region restriction groups created when `regions` parameter is specified
 - Cost control policies are attached at group level
-- All tagging policies are enforced through groups
+- Region restrictions are per-user with custom IAM groups
 
 ## Stack Outputs Available
 
@@ -380,16 +384,15 @@ Returns: `arn:aws:kms:sa-east-1:ACCOUNT_ID:key/KEY_ID`
 
 ## Current Status - Production Ready 🚀
 
-- **Architecture**: Advanced group-based IAM with AWS managed policies and universal restrictions
-- **Resources**: ~30+ AWS resources deployed (7 IAM groups, 1 OIDC provider, 3 GitHub Actions roles, policies, user, dashboard, SNS)
+- **Architecture**: Advanced group-based IAM with per-user region restrictions
+- **Resources**: ~30+ AWS resources deployed (4 IAM restriction groups, 1 OIDC provider, 3 GitHub Actions roles, policies, user, dashboard, SNS)
 - **Team Budget**: $200/month total
-- **Active Members**: 1 user (maria-gonzalez) with admin + all restrictions
+- **Active Members**: 1 user (maria-gonzalez) with admin + all restrictions + sa-east-1 region lock
 - **GitHub OIDC**: Configured for CI/CD automation with repository-level trust policies
-- **Security**: Enterprise-ready with comprehensive cost controls and regional limitations
-- **Regional Control**: **STRICT** - All AWS services limited to sa-east-1 only
+- **Security**: Enterprise-ready with comprehensive cost controls and per-user regional limitations
+- **Regional Control**: **PER-USER** - Each user can have custom allowed regions via `regions` parameter
 - **Instance Types**: Expanded ARM support (t3a, t4g) for cost optimization
 - **Password Policy**: User-friendly (8+ chars, mixed case + numbers, symbols optional)
-- **Tagging Strategy**: Strategic enforcement (removed from EC2 for UX, kept for S3/RDS/Lambda)
 - **Budget Framework**: SNS topic ready, individual budgets disabled for iteration
 - **Type Safety**: ✅ All TypeScript errors resolved with strict bundler configuration
 - **Cost Dashboard**: CloudWatch dashboard for team cost monitoring
@@ -405,7 +408,15 @@ Returns: `arn:aws:kms:sa-east-1:ACCOUNT_ID:key/KEY_ID`
 
 ## Recent Major Improvements (Latest Commits) 🚀
 
-### LATEST: "feat: GitHub OIDC Identity Provider"
+### LATEST: "feat: per-user region restrictions"
+
+- **BREAKING**: Replaced global region restrictions with per-user region control
+- **NEW PARAMETER**: Added `regions?: Region[]` to TeamMemberWithBudget interface
+- **Per-User Groups**: Each user with region restrictions gets their own IAM group
+- **Flexible Control**: Users can have custom allowed regions or no restrictions
+- **Type-Safe**: Uses `Region` type from constants for region validation
+
+### "feat: GitHub OIDC Identity Provider"
 
 - **NEW MODULE**: Complete GitHub Actions OIDC authentication system (`src/identity-provider/`)
 - **Keyless CI/CD**: Eliminates need for long-lived AWS access keys in GitHub secrets
@@ -416,21 +427,9 @@ Returns: `arn:aws:kms:sa-east-1:ACCOUNT_ID:key/KEY_ID`
 
 ### dd54226: "feat: only sa-east-1 region allowed"
 
-- **BREAKING**: Restricted ALL AWS services to sa-east-1 region only
-- Enhanced cost control through strict geographic limitations
-- Significant cost savings by limiting to South America region
-
-### 20b5396: "feat: force tags in creation not more"
-
-- **UX IMPROVEMENT**: Removed mandatory tagging from EC2 instances for better user experience
-- Strategic tagging policy: kept mandatory for S3, RDS, Lambda (high-cost services)
-- Balanced security vs usability approach
-
-### e254213: "feat: region restrictions"
-
-- Implemented universal region restrictions via UniversalRestrictions group
-- Added regionRestriction service to members configuration
-- Global policy enforcement across all AWS services
+- **SUPERSEDED**: Replaced by per-user region restrictions
+- Originally restricted ALL AWS services to sa-east-1 region only
+- Now users can have custom region configurations
 
 ### e8d42d0: "feat: update instance types"
 
@@ -443,10 +442,10 @@ Returns: `arn:aws:kms:sa-east-1:ACCOUNT_ID:key/KEY_ID`
 ### Key Patterns to Follow
 
 1. **Always check current constants first**: `src/constants.ts` has the latest restrictions
-2. **Region is LOCKED**: Don't suggest resources outside sa-east-1
+2. **Regions are PER-USER**: Each user can have custom `regions` parameter or no restrictions
 3. **Instance types are STRICT**: Only t2/t3/t3a/t4g nano/micro/small allowed
-4. **Tagging is STRATEGIC**: Required for S3/RDS/Lambda, optional for EC2
-5. **Group membership is AUTOMATIC**: Users join groups based on `services` array
+4. **Group membership is AUTOMATIC**: Users join groups based on `services` array
+5. **Region groups are DYNAMIC**: Created per-user when `regions` parameter is specified
 6. **Budget system is DISABLED**: Focus on cost control through policies, not budgets
 
 ### Quick Commands Reference
@@ -477,11 +476,11 @@ pulumi stack output kmsKeyArn
 ### Current Architecture Priorities
 
 1. **Cost Control First**: Every change should maintain or improve cost controls
-2. **Regional Compliance**: sa-east-1 only for all services
-3. **User Experience**: Balance security with usability (EC2 tagging example)
-4. **Type Safety**: Maintain strict TypeScript configuration
+2. **Per-User Flexibility**: Allow custom region restrictions per user
+3. **User Experience**: Balance security with usability
+4. **Type Safety**: Maintain strict TypeScript configuration with Region types
 5. **Production Ready**: All changes should be production-grade
 
 ---
 
-_Last Updated: Based on commit dd54226 "feat: only sa-east-1 region allowed" - September 2025_
+_Last Updated: Based on "feat: per-user region restrictions" refactor - September 2025_
