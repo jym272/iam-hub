@@ -1,5 +1,5 @@
 - Realmente necesitamos identity center management?
-- CI/CD -> for sure! -> GH ACTIONS. step para agregar pulumi al runner, o capaz el runner ya 
+- CI/CD -> for sure! -> GH ACTIONS. step para agregar pulumi al runner, o capaz el runner ya
   viene con pulumi
 - agregar lint, ts check, etc....
 - como manejar secretos del stack en ci/cd?, necesitamos -y para todos los comandos, capaz
@@ -10,7 +10,6 @@
 - TESTEAR, como agregar awereness de los recursos gratuitos de aws?
 - Añadir tags a todo
 
-
 ---
 
 CRITICS:
@@ -19,6 +18,7 @@ Compartir este repo.
 
 Habilitar Identity Center en la org?
 Se necesita habilitar "Budgets", se tiene que tener instrucciones primero
+
 ```text
 Diagnostics:
   aws:budgets:Budget (budget-maria-gonzalez):
@@ -33,13 +33,14 @@ Diagnostics:
 
 ```
 
-- Pensar mejor en agrupar los roles, si bien dividir las policies en "servicios", como ec2, 
-  parece ideal, realmente no lo es, ya que muchos otros servicios usan ec2, el approach de 
+- Pensar mejor en agrupar los roles, si bien dividir las policies en "servicios", como ec2,
+  parece ideal, realmente no lo es, ya que muchos otros servicios usan ec2, el approach de
   módulos que previenen la creacion de instancias grandes por separado parece correcta.
-- Se debería respaldarse en aws managed policies, usar estas en grupos para los users, luego 
+- Se debería respaldarse en aws managed policies, usar estas en grupos para los users, luego
   cada user individual podría tener policies más específicas.
 - Allowed regions no funciona, de todas formas por ahora no se necesita eso?.
 - Testar EC2 large instances en ecs
 - SE CAMBIA EL APPROACH https://claude.ai/chat/6e3902e5-c4b4-48e7-acd0-7e72589030a3
-- Admin, todos, restringo instancias grandes y restringo region. el control sería por VPC, se 
+- Admin, todos, restringo instancias grandes y restringo region. el control sería por VPC, se
   solicita incremento de vpc.
+- AGREGAR REGION A LOS USERS/MEMBERS, cada user elige sus regiones!

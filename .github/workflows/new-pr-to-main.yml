@@ -1,0 +1,72 @@
+name: pull_request_to_main
+
+on:
+  pull_request:
+    types: [opened, synchronize, reopened]
+    paths:
+      - "**.sh"
+      - "**.md"
+      - "**.yml"
+      - "**.yaml"
+      - "**.ts"
+    branches:
+      - main
+
+concurrency:
+  group: ${{ github.workflow }}-${{ github.ref }}
+  cancel-in-progress: ${{ github.ref != 'refs/heads/main' }}
+
+env:
+  FORCE_COLOR: 3
+defaults:
+  run:
+    shell: bash
+
+jobs:
+  code_quality_check:
+    permissions:
+      contents: write
+      pull-requests: write
+    uses: ./.github/workflows/code-quality-check.yml
+    secrets: inherit
+  pulumi-preview:
+    needs: code_quality_check
+    timeout-minutes: 3
+    runs-on: ubuntu-latest
+    environment: production
+    permissions:
+      contents: "read"
+      id-token: "write"
+      pull-requests: "write"
+    steps:
+      - name: Checkout
+        uses: actions/checkout@v5
+
+      - name: AWS credentials
+        uses: aws-actions/configure-aws-credentials@v5
+        with:
+          role-to-assume: ${{ secrets.AWS_INFRASTRUCTURE_ADMIN_CD }}
+          aws-region: ${{ secrets.AWS_REGION }}
+
+      - uses: actions/setup-node@v5
+        with:
+          # Necesita node con soporte nativo typescript --> Node.js 23.6.0 or later.
+          node-version: 24.7.0
+
+      - uses: oven-sh/setup-bun@v2
+        with:
+          bun-version: "latest"
+
+      - name: Install dependencies
+        run: |
+          bun install
+
+      - name: Pulumi Preview
+        uses: pulumi/actions@v6
+        with:
+          command: preview
+          pulumi-version: latest
+          stack-name: dev
+          comment-on-pr: true
+          comment-on-summary: true
+          cloud-url: s3://gm2dev-pulumi-state

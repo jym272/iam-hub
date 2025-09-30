@@ -4,15 +4,14 @@ import {
   ALLOWED_RDS_INSTANCES,
   ALLOWED_ELASTICACHE_INSTANCES,
   ALLOWED_OPENSEARCH_INSTANCES,
-  ALLOWED_MQ_INSTANCES
+  ALLOWED_MQ_INSTANCES,
 } from "../../constants.ts";
 /////////////////////////// instances restriction //////////////////////////////////////
 
 export const instancesRestrictionsGroup = new aws.iam.Group("instances-restrictions-group", {
   name: "InstancesRestrictions",
-  path: "/restrictions/"
+  path: "/restrictions/",
 });
-
 
 export const instancesRestrictionsPolicy = new aws.iam.GroupPolicy("instances-restriction", {
   group: instancesRestrictionsGroup.name,
@@ -26,9 +25,9 @@ export const instancesRestrictionsPolicy = new aws.iam.GroupPolicy("instances-re
         Resource: "arn:aws:ec2:*:*:instance/*",
         Condition: {
           "ForAnyValue:StringNotEquals": {
-            "ec2:InstanceType": ALLOWED_EC2_INSTANCES
-          }
-        }
+            "ec2:InstanceType": ALLOWED_EC2_INSTANCES,
+          },
+        },
       },
       {
         Sid: "DenyLargeRDSInstances",
@@ -37,52 +36,43 @@ export const instancesRestrictionsPolicy = new aws.iam.GroupPolicy("instances-re
         Resource: "*",
         Condition: {
           "ForAnyValue:StringNotEquals": {
-            "rds:DatabaseClass": ALLOWED_RDS_INSTANCES
-          }
-        }
+            "rds:DatabaseClass": ALLOWED_RDS_INSTANCES,
+          },
+        },
       },
       {
         Sid: "DenyLargeElastiCacheInstances",
         Effect: "Deny",
-        Action: [
-          "elasticache:CreateCacheCluster",
-          "elasticache:CreateReplicationGroup"
-        ],
+        Action: ["elasticache:CreateCacheCluster", "elasticache:CreateReplicationGroup"],
         Resource: "*",
         Condition: {
           "ForAnyValue:StringNotEquals": {
-            "elasticache:CacheNodeType": ALLOWED_ELASTICACHE_INSTANCES
-          }
-        }
+            "elasticache:CacheNodeType": ALLOWED_ELASTICACHE_INSTANCES,
+          },
+        },
       },
       {
         Sid: "DenyLargeOpenSearchInstances",
         Effect: "Deny",
-        Action: [
-          "es:CreateElasticsearchDomain",
-          "es:CreateDomain",
-          "opensearch:CreateDomain"
-        ],
+        Action: ["es:CreateElasticsearchDomain", "es:CreateDomain", "opensearch:CreateDomain"],
         Resource: "*",
         Condition: {
           "ForAnyValue:StringNotEquals": {
-            "es:InstanceType": ALLOWED_OPENSEARCH_INSTANCES
-          }
-        }
+            "es:InstanceType": ALLOWED_OPENSEARCH_INSTANCES,
+          },
+        },
       },
       {
         Sid: "DenyLargeMQInstances",
         Effect: "Deny",
-        Action: [
-          "mq:CreateBroker"
-        ],
+        Action: ["mq:CreateBroker"],
         Resource: "*",
         Condition: {
           "ForAnyValue:StringNotEquals": {
-            "mq:BrokerInstanceType": ALLOWED_MQ_INSTANCES
-          }
-        }
-      }
-    ]
-  })
+            "mq:BrokerInstanceType": ALLOWED_MQ_INSTANCES,
+          },
+        },
+      },
+    ],
+  }),
 });

@@ -1,9 +1,15 @@
 # infra
-				.--.
-				|o_o|
-				|:_/|
+
+    			.--.
+    			|o_o|
+    			|:_/|
 
 `console`: https://309237749333.signin.aws.amazon.com/console
+
+`dep`
+
+- Node.js 23.6.0 or later.
+- bun
 
 To install dependencies:
 
@@ -15,10 +21,9 @@ brew install pulumi
 brew install mise
 ```
 
-
 ### Recursos creados a "mano"
 
-*<small>primero la trampa, después el queso</small>*
+_<small>primero la trampa, después el queso</small>_
 
 - La activación de identity center en la región de us-east-2
 
@@ -70,17 +75,21 @@ aws s3 mb s3://gm2dev-pulumi-state
 ```shell
 # Inicializar proyecto
 pulumi login s3://gm2dev-pulumi-state
-# Inicializar stack, se usa passphrase "gm2dev" -> TODO: mejorar esto, es secreto de secretos!
+# Inicializar stack
 pulumi stack init dev
+
+# Configure AWS KMS for secrets encryption (no passphrase needed!)
+# Note: KMS key is created automatically by the Pulumi code
+# After first deployment, switch to KMS with:
+# pulumi stack change-secrets-provider "awskms://alias/pulumi-secrets?region=sa-east-1"
 
 # Type check
 bun run type-check
 
-export PULUMI_CONFIG_PASSPHRASE=gm2dev
-#Preview
+# Preview (no passphrase needed with KMS)
 pulumi preview
 # Deploy
- pulumi up
+pulumi up
 # Get user credentials (access keys and secrets)
 pulumi stack output userCredentials --show-secrets --json
 
@@ -94,8 +103,21 @@ pulumi destroy
 pulumi stack rm dev
 ```
 
+#### Secrets Provider: AWS KMS
+
+This project uses **AWS KMS** for secrets encryption instead of a passphrase. Benefits:
+
+- ✅ No passphrase to remember or store
+- ✅ IAM-based access control
+- ✅ Automatic key rotation enabled
+- ✅ Better security for production
+
+The KMS key (`alias/pulumi-secrets`) is created automatically by the infrastructure code.
+
 ### Password Policy
+
 The infrastructure creates an account password policy with the following requirements:
+
 - Minimum 8 characters
 - Must contain uppercase letters
 - Must contain lowercase letters
@@ -105,4 +127,4 @@ The infrastructure creates an account password policy with the following require
 - Password expires after 90 days
 - Cannot reuse last 3 passwords
 
-When changing from temporary password, use something like: `MyPassword123` 
+When changing from temporary password, use something like: `MyPassword123`

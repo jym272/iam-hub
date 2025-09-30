@@ -1,14 +1,11 @@
 import * as aws from "@pulumi/aws";
-import {
-  ALLOWED_REGIONS,
-} from "../../constants.ts";
+import { ALLOWED_REGIONS } from "../../constants.ts";
 
 //////////////////////// Universal restrictions group ////////////////////////////////////////////////////
 export const universalRestrictionsGroup = new aws.iam.Group("universal-restrictions-group", {
   name: "UniversalRestrictions",
-  path: "/restrictions/"
+  path: "/restrictions/",
 });
-
 
 // Universal region restriction policy - applies to ALL AWS services except global services
 export const universalRegionPolicy = new aws.iam.GroupPolicy("universal-region-restriction", {
@@ -27,15 +24,15 @@ export const universalRegionPolicy = new aws.iam.GroupPolicy("universal-region-r
           "budgets:*",
           "aws-portal:*",
           "shield:*",
-          "globalaccelerator:*"
+          "globalaccelerator:*",
         ],
         Resource: "*",
         Condition: {
-          "StringNotEquals": {
-            "aws:RequestedRegion": ALLOWED_REGIONS
-          }
-        }
-      }
-    ]
-  })
+          StringNotEquals: {
+            "aws:RequestedRegion": ALLOWED_REGIONS,
+          },
+        },
+      },
+    ],
+  }),
 });

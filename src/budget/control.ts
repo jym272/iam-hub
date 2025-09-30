@@ -1,7 +1,7 @@
 import * as aws from "@pulumi/aws";
-import {teamMembersWithBudgets} from "../members.ts";
-import {serviceToGroup, billingGroup, type ServiceName} from "../iam/index.ts";
-import {generalCostControlPolicy} from "../policies/index.ts";
+import { teamMembersWithBudgets } from "../members.ts";
+import { serviceToGroup, billingGroup, type ServiceName } from "../iam/index.ts";
+import { generalCostControlPolicy } from "../policies/index.ts";
 
 // Create account password policy for user-friendly passwords
 export const accountPasswordPolicy = new aws.iam.AccountPasswordPolicy("account-password-policy", {
@@ -13,12 +13,11 @@ export const accountPasswordPolicy = new aws.iam.AccountPasswordPolicy("account-
   allowUsersToChangePassword: true,
   maxPasswordAge: 90, // 90 days
   passwordReusePrevention: 3,
-  hardExpiry: false
+  hardExpiry: false,
 });
 
-
 // Create resources for each team member with budget controls
-export const teamResourcesWithBudgets = teamMembersWithBudgets.map(member => {
+export const teamResourcesWithBudgets = teamMembersWithBudgets.map((member) => {
   // Create IAM user with mandatory cost tags
   const user = new aws.iam.User(`user-${member.username}`, {
     name: member.username,
@@ -26,33 +25,32 @@ export const teamResourcesWithBudgets = teamMembersWithBudgets.map(member => {
     tags: {
       MonthlyBudget: member.monthlyBudgetUSD.toString(),
       CreatedBy: member.username,
-      BudgetTracking: "enabled"
+      BudgetTracking: "enabled",
     },
-    forceDestroy: true
+    forceDestroy: true,
   });
 
   // Add user to service groups based on their required services
   const groupMemberships = member.services
-      // should be kinda useless with correct ts checks
+    // should be kinda useless with correct ts checks
     .filter((service): service is ServiceName => service in serviceToGroup)
-    .map(service => {
+    .map((service) => {
       return new aws.iam.UserGroupMembership(`user-group-${member.username}-${service}`, {
         user: user.name,
-        groups: [serviceToGroup[service].name]
+        groups: [serviceToGroup[service].name],
       });
     });
 
   // Add user to billing group for cost monitoring
   const billingGroupMembership = new aws.iam.UserGroupMembership(`user-group-${member.username}-billing`, {
     user: user.name,
-    groups: [billingGroup.name]
+    groups: [billingGroup.name],
   });
-
 
   // Attach general cost control policy
   const generalCostControlAttachment = new aws.iam.UserPolicyAttachment(`user-cost-control-${member.username}`, {
     user: user.name,
-    policyArn: generalCostControlPolicy.arn
+    policyArn: generalCostControlPolicy.arn,
   });
 
   // TODO: activate Budgets later. Create AWS Budget for this user
@@ -103,7 +101,7 @@ export const teamResourcesWithBudgets = teamMembersWithBudgets.map(member => {
   let accessKey;
   if (member.needsAccessKey) {
     accessKey = new aws.iam.AccessKey(`access-key-${member.username}`, {
-      user: user.name
+      user: user.name,
     });
   }
 
@@ -112,7 +110,7 @@ export const teamResourcesWithBudgets = teamMembersWithBudgets.map(member => {
   if (member.needsConsoleAccess) {
     loginProfile = new aws.iam.UserLoginProfile(`login-profile-${member.username}`, {
       user: user.name,
-      passwordResetRequired: true
+      passwordResetRequired: true,
     });
   }
 
@@ -124,7 +122,7 @@ export const teamResourcesWithBudgets = teamMembersWithBudgets.map(member => {
     generalCostControlAttachment,
     accessKey,
     loginProfile,
-    memberConfig: member
+    memberConfig: member,
   };
 });
 
@@ -155,5 +153,3 @@ export const teamResourcesWithBudgets = teamMembersWithBudgets.map(member => {
 // });
 //
 //
-
-

@@ -1,4 +1,4 @@
-import {ALLOWED_REGIONS, ALLOWED_EC2_INSTANCES, ALLOWED_RDS_INSTANCES} from "../constants.ts";
+import { ALLOWED_REGIONS, ALLOWED_EC2_INSTANCES, ALLOWED_RDS_INSTANCES } from "../constants.ts";
 import * as aws from "@pulumi/aws";
 
 // Function to create cost allocation tags policy
@@ -14,14 +14,14 @@ export function createCostTrackingPolicy(username: string, costCenter: string): 
           "aws-portal:*Billing",
           "aws-portal:*Usage",
           "aws-portal:*PaymentMethods",
-          "support:*"
+          "support:*",
         ],
         Resource: "*",
         Condition: {
           StringEquals: {
-            "aws:RequestedRegion": ALLOWED_REGIONS
-          }
-        }
+            "aws:RequestedRegion": ALLOWED_REGIONS,
+          },
+        },
       },
       // Sistema de tags, medio policía, no es ideal y necesita refactor, debería estar en la sección donde se activa servicios.
       {
@@ -34,13 +34,13 @@ export function createCostTrackingPolicy(username: string, costCenter: string): 
         ],
         Resource: "arn:aws:ec2:*:*:instance/*",
         Condition: {
-          "StringNotEquals": {
+          StringNotEquals: {
             "aws:RequestTag/CreatedBy": username,
             // No puede estar en la misma condición, por lógica de exito es un OR, es decir, solo niega la creacion si ningún tag coincide, se desea que ambos existan
             // por eso se repite la policy.
             // "aws:RequestTag/CostCenter": costCenter,
-          }
-        }
+          },
+        },
       },
       {
         Effect: "Deny",
@@ -52,12 +52,12 @@ export function createCostTrackingPolicy(username: string, costCenter: string): 
         ],
         Resource: "arn:aws:ec2:*:*:instance/*",
         Condition: {
-          "StringNotEquals": {
-            "aws:RequestTag/CostCenter": costCenter
-          }
-        }
-      }
-    ]
+          StringNotEquals: {
+            "aws:RequestTag/CostCenter": costCenter,
+          },
+        },
+      },
+    ],
   });
 }
 
@@ -72,9 +72,9 @@ export function createResourceLimitsPolicy(username: string): string {
         Resource: "arn:aws:ec2:*:*:instance/*",
         Condition: {
           "ForAnyValue:StringNotEquals": {
-            "ec2:InstanceType": ALLOWED_EC2_INSTANCES
-          }
-        }
+            "ec2:InstanceType": ALLOWED_EC2_INSTANCES,
+          },
+        },
       },
       {
         Effect: "Deny",
@@ -82,22 +82,19 @@ export function createResourceLimitsPolicy(username: string): string {
         Resource: "*",
         Condition: {
           "ForAnyValue:StringNotEquals": {
-            "rds:DatabaseClass": ALLOWED_RDS_INSTANCES
-          }
-        }
+            "rds:DatabaseClass": ALLOWED_RDS_INSTANCES,
+          },
+        },
       },
       {
         Effect: "Deny",
-        Action: [
-          "ec2:CreateVolume",
-          "ec2:ModifyVolume"
-        ],
+        Action: ["ec2:CreateVolume", "ec2:ModifyVolume"],
         Resource: "*",
         Condition: {
-          "NumericGreaterThan": {
-            "ebs:VolumeSize": "100" // Limit EBS volumes to 100GB
-          }
-        }
+          NumericGreaterThan: {
+            "ebs:VolumeSize": "100", // Limit EBS volumes to 100GB
+          },
+        },
       },
       {
         Effect: "Deny",
@@ -108,20 +105,19 @@ export function createResourceLimitsPolicy(username: string): string {
           "rds:CreateDBCluster",
           "redshift:CreateCluster",
           "es:CreateElasticsearchDomain",
-          "es:CreateDomain"
+          "es:CreateDomain",
         ],
         Resource: "*",
         Condition: {
-          "StringNotEquals": {
+          StringNotEquals: {
             "aws:RequestTag/CreatedBy": username,
-            "aws:RequestTag/CostCenter": "approved-expensive"
-          }
-        }
-      }
-    ]
+            "aws:RequestTag/CostCenter": "approved-expensive",
+          },
+        },
+      },
+    ],
   });
 }
-
 
 //////////////////////// Some policies ////////////////////////////////////////////////////
 
@@ -133,16 +129,13 @@ export const generalCostControlPolicy = new aws.iam.Policy("general-cost-control
     Statement: [
       {
         Effect: "Deny",
-        Action: [
-          "ec2:CreateVolume",
-          "ec2:ModifyVolume"
-        ],
+        Action: ["ec2:CreateVolume", "ec2:ModifyVolume"],
         Resource: "*",
         Condition: {
-          "NumericGreaterThan": {
-            "ebs:VolumeSize": "100"
-          }
-        }
+          NumericGreaterThan: {
+            "ebs:VolumeSize": "100",
+          },
+        },
       },
       {
         Effect: "Deny",
@@ -153,11 +146,10 @@ export const generalCostControlPolicy = new aws.iam.Policy("general-cost-control
           "rds:CreateDBCluster",
           "redshift:CreateCluster",
           "es:CreateElasticsearchDomain",
-          "es:CreateDomain"
+          "es:CreateDomain",
         ],
-        Resource: "*"
-      }
-    ]
-  })
+        Resource: "*",
+      },
+    ],
+  }),
 });
-

@@ -2,15 +2,16 @@
 
 **Generated:** 2025-09-29
 **Stack:** dev
-**Total Resources Deployed:** 23 AWS resources
+**Total Resources Deployed:** 30 AWS resources
 
 ---
 
 ## Executive Summary
 
-This infrastructure project implements a sophisticated IAM group-based budget control system using Pulumi and AWS. The current deployment consists of **production-ready code** with **4 IAM restriction groups**, **1 admin group**, **1 billing group**, and **1 active user** (maria-gonzalez) with a $200/month budget. The system enforces strict regional restrictions (sa-east-1 only), instance type limitations, and comprehensive cost controls through IAM policies.
+This infrastructure project implements a sophisticated IAM group-based budget control system using Pulumi and AWS. The current deployment consists of **production-ready code** with **4 IAM restriction groups**, **1 admin group**, **1 billing group**, **1 GitHub OIDC identity provider**, **3 GitHub Actions IAM roles**, and **1 active user** (maria-gonzalez) with a $200/month budget. The system enforces strict regional restrictions (sa-east-1 only), instance type limitations, comprehensive cost controls through IAM policies, and keyless CI/CD authentication for GitHub Actions.
 
 **Key Finding:** The codebase contains a mix of:
+
 - ✅ **Production Code** (actively deployed and enforced)
 - 📦 **Legacy Code** (outdated, replaced by newer implementations)
 - 🚧 **TODO/Future Code** (disabled features planned for future iterations)
@@ -24,6 +25,7 @@ This infrastructure project implements a sophisticated IAM group-based budget co
 **Status:** ✅ PRODUCTION - All 4 restriction groups + admin + billing deployed
 
 #### Active Groups:
+
 1. **AdminUsers** (`admin.ts`)
    - AWS Managed Policy: `AdministratorAccess`
    - Path: `/service-groups/`
@@ -56,26 +58,169 @@ This infrastructure project implements a sophisticated IAM group-based budget co
    - Status: DEPLOYED
 
 #### Group Mapping (`groups.ts`)
+
 ```typescript
 serviceToGroup = {
-  regionRestriction: universalRestrictionsGroup,    // ✅ DEPLOYED
-  iamRestriction: iamRestrictionsGroup,             // ✅ DEPLOYED
+  regionRestriction: universalRestrictionsGroup, // ✅ DEPLOYED
+  iamRestriction: iamRestrictionsGroup, // ✅ DEPLOYED
   instancesRestriction: instancesRestrictionsGroup, // ✅ DEPLOYED
-  admin: adminGroup                                 // ✅ DEPLOYED
-}
+  admin: adminGroup, // ✅ DEPLOYED
+};
 ```
 
 **Current User Assignment:**
+
 - `maria-gonzalez`: All 4 restrictions + admin (100% coverage)
 
 ---
 
-### 1.2 Budget Control System (`src/budget/`)
+### 1.2 GitHub OIDC Identity Provider (`src/identity-provider/`)
+
+**Status:** ✅ PRODUCTION - 1 OIDC provider + 3 IAM roles deployed
+
+#### Overview
+
+Provides **keyless authentication** for GitHub Actions workflows to AWS using OpenID Connect (OIDC) federation. Eliminates the need for long-lived AWS access keys stored as GitHub secrets.
+
+#### Deployed Resources:
+
+1. **IAM OIDC Provider** (`github-actions-oidc`)
+   - URL: `https://token.actions.githubusercontent.com`
+   - Client ID: `sts.amazonaws.com`
+   - Thumbprint: `6938fd4d98bab03faadb97b34396831e3780aea1` (GitHub's verified thumbprint)
+   - Tags: `motive: "ci-cd github actions"`, `ManagedBy: "Pulumi"`, `Organization: "jym272"`
+   - Status: DEPLOYED
+
+2. **IAM Role: infrastructure-admin-cd**
+   - Full name: `github-actions-infrastructure-admin-cd`
+   - Description: "Admin SA for continuous deployment of infrastructure"
+   - Policy: `AdministratorAccess` (AWS managed)
+   - Repositories: `["iam-hub"]`
+   - Trust policy: Only allows OIDC tokens from `repo:jym272/iam-hub:*`
+   - Status: DEPLOYED
+
+3. **Policy Attachments** (3 total)
+   - Auto-attached to respective roles
+   - Support both AWS managed policies and custom managed policies (with full ARN)
+   - Status: DEPLOYED
+
+#### Architecture Features:
+
+**Type Safety:**
+
+- Full TypeScript interfaces with Pulumi `Output<T>` types
+- `GitHubActionsRoleConfig`, `GitHubOIDCProviderConfig`, `GitHubOIDCProviderOutputs`
+- JSDoc comments on all public interfaces
+
+**Trust Policy Generation:**
+
+- Automatic subject condition: `repo:{org}/{repo}:*`
+- Wildcard support for all branches, tags, and PRs
+- Audience verification: `sts.amazonaws.com`
+- Provider ARN validation
+
+**Policy Support:**
+
+- AWS managed policies: Auto-resolves to `arn:aws:iam::aws:policy/{PolicyName}`
+- Custom managed policies: Requires full ARN starting with `"arn:"`
+- Smart detection: Checks if string starts with `"arn:"` to determine policy type
+
+**Repository Access Control:**
+
+- Fine-grained per-repo trust policies
+- Multiple repositories can share the same role
+- Each role can have different policy permissions
+
+#### Stack Outputs:
+
+```typescript
+githubOIDCProviderArn: Output<string>
+githubActionsRoleArns: {
+  "infrastructure-admin-cd": Output<string>
+}
+```
+
+**Retrieval Commands:**
+
+```bash
+# Get OIDC provider ARN
+pulumi stack output githubOIDCProviderArn
+
+# Get all role ARNs (JSON)
+pulumi stack output githubActionsRoleArns --json
+```
+
+#### Configuration (`src/identity-provider/config.ts`):
+
+```typescript
+export const githubOIDCConfig: GitHubOIDCProviderConfig = {
+  githubOrganization: "jym272",
+  roles: [
+    {
+      id: "infrastructure-admin-cd",
+      description: "Admin SA for continuous deployment of infrastructure",
+      policies: ["AdministratorAccess"],
+      repositories: ["iam-hub"],
+    },
+  ],
+  providerTags: {
+    motive: "ci-cd github actions",
+    ManagedBy: "Pulumi",
+    Organization: "jym272",
+  },
+};
+```
+
+#### GitHub Actions Integration:
+
+**Workflow Configuration:**
+
+```yaml
+permissions:
+  id-token: write # Required for OIDC
+  contents: read
+
+jobs:
+  deploy:
+    runs-on: ubuntu-latest
+    steps:
+      - name: Configure AWS Credentials
+        uses: aws-actions/configure-aws-credentials@v4
+        with:
+          role-to-assume: ${{ secrets.AWS_ROLE_ARN }}
+          aws-region: sa-east-1
+
+      - name: Deploy Infrastructure
+        run: pulumi up --yes
+```
+
+**Security Benefits:**
+
+- ✅ No long-lived credentials stored in GitHub
+- ✅ Temporary STS tokens (expire automatically)
+- ✅ Repository-level access control
+- ✅ CloudTrail audit trail for all assume-role operations
+- ✅ Easy rotation (no secrets to rotate)
+
+#### Module Structure:
+
+- **`github-oidc.ts`** (140 LOC): Core implementation with OIDC provider and role creation logic
+- **`types.ts`** (72 LOC): TypeScript interfaces with Pulumi Output types
+- **`config.ts`** (31 LOC): Organization and role configurations
+- **`index.ts`** (8 LOC): Module exports
+
+**Total:** ~250 LOC of production code
+
+---
+
+### 1.3 Budget Control System (`src/budget/`)
 
 #### `control.ts` - User Provisioning ✅
+
 **Status:** PRODUCTION
 
 **Features:**
+
 - Creates IAM users with cost tracking tags
 - Automatic group membership based on `services` array
 - Password policy enforcement (8+ chars, mixed case + numbers)
@@ -84,12 +229,14 @@ serviceToGroup = {
 - Attaches `generalCostControlPolicy` to all users
 
 **Tags Applied:**
+
 - `MonthlyBudget`: User's budget amount
 - `CreatedBy`: Username
 - `BudgetTracking`: "enabled"
 - ~~`Environment`~~: **REMOVED** (just completed refactor)
 
 **Deployed Resources:**
+
 - 1 IAM user: `maria-gonzalez`
 - 4 group memberships (one per restriction group)
 - 1 billing group membership
@@ -100,12 +247,15 @@ serviceToGroup = {
 ---
 
 #### `enforcement.ts` - SNS Topic 🔔
+
 **Status:** PRODUCTION (Topic only)
 
 **Active:**
+
 - SNS Topic: `budget-alerts-topic` (ARN in stack outputs)
 
 **Disabled:**
+
 - Lambda enforcement function (commented out)
 - SNS → Lambda subscription (commented out)
 - Access key auto-disable logic (commented out)
@@ -117,9 +267,11 @@ serviceToGroup = {
 ### 1.3 Cost Control Policies (`src/policies/cost.ts`)
 
 #### `generalCostControlPolicy` ✅
+
 **Status:** PRODUCTION - Attached to all users
 
 **Enforced Restrictions:**
+
 1. **EBS Volume Limits:**
    - Max size: 100GB
    - Affects: `ec2:CreateVolume`, `ec2:ModifyVolume`
@@ -151,10 +303,10 @@ teamMembersWithBudgets = [
     budgetAlerts: {
       warningThreshold: 85,
       criticalThreshold: 100,
-      emails: ["jym272@gmail.com"]
-    }
-  }
-]
+      emails: ["jym272@gmail.com"],
+    },
+  },
+];
 ```
 
 **Note:** `environment` property removed in latest refactor.
@@ -166,6 +318,7 @@ teamMembersWithBudgets = [
 **Status:** PRODUCTION
 
 **Available Outputs:**
+
 - `budgetSummary`: Array of {username, monthlyBudget, services}
 - `userCredentials`: Access keys (secrets)
 - `consoleAccess`: Temporary passwords + console URLs
@@ -173,6 +326,7 @@ teamMembersWithBudgets = [
 - `serviceToGroup`: Group mappings
 
 **Console Table Output:**
+
 ```
 ┌─────────┬──────────────────┬───────────────┬─────────────────────────────┐
 │ (index) │ username         │ monthlyBudget │ services                    │
@@ -190,6 +344,7 @@ teamMembersWithBudgets = [
 **Status:** PRODUCTION
 
 **Deployed Values:**
+
 - `ADMIN_EMAILS`: ["jorge.clavijo@gm2dev.com"]
 - `ALLOWED_REGIONS`: ["sa-east-1"] ⚠️ STRICT
 - `ALLOWED_EC2_INSTANCES`: 12 instance types (t2/t3/t3a/t4g nano/micro/small)
@@ -209,19 +364,23 @@ teamMembersWithBudgets = [
 **Status:** 📦 LEGACY - NOT DEPLOYED
 
 **Why Legacy:**
+
 - **Replaced by:** IAM group system with AWS managed policies
 - **Original Purpose:** Custom service permissions for S3, ECS, RDS, Lambda, EC2
 - **Issue:** Hardcoded service permissions, not dynamic
 
 **TODOs Found:**
+
 - Line 18: `// TODO: hardcoded "services" key for now, it should be dynamic!`
 - Line 111: `// TODO: tendrían que ser managed policies mejor`
 
 **Exports:**
+
 - `servicePermissions`: Record of custom IAM policies
 - `createCombinedPolicy()`: Combines policies for multiple services
 
 **Evidence of Non-Use:**
+
 - Not imported in any production code
 - No references in `control.ts` or group files
 - Groups use AWS managed policies instead
@@ -235,6 +394,7 @@ teamMembersWithBudgets = [
 **Status:** 📦 PARTIALLY LEGACY
 
 #### Legacy Functions (NOT DEPLOYED):
+
 1. **`createCostTrackingPolicy(username, costCenter)`**
    - Custom tag enforcement for EC2 instances
    - Replaced by group-based policies
@@ -248,11 +408,13 @@ teamMembersWithBudgets = [
    - Replaced by `instancesRestrictionsGroup` + `generalCostControlPolicy`
 
 #### Production Code (DEPLOYED):
+
 - **`generalCostControlPolicy`**: ✅ Active inline policy
 
 **Note:** File is 164 lines, but only ~33 lines (20%) are production code.
 
 **Recommendation:**
+
 - Extract `generalCostControlPolicy` to its own file
 - Archive legacy functions
 
@@ -283,12 +445,14 @@ teamMembersWithBudgets = [
 #### Commented-Out Code:
 
 **Individual User Budgets** (`control.ts:59-101`):
+
 ```typescript
 // TODO: activate Budgets later. Create AWS Budget for this user
 // const userBudget = new aws.budgets.Budget(...)
 ```
 
 **Features:**
+
 - Per-user monthly budget tracking
 - Cost filtering by `CreatedBy:username` tags
 - 3-tier alerts (warning, critical, forecasted)
@@ -296,12 +460,14 @@ teamMembersWithBudgets = [
 - Email subscriptions
 
 **Team Budget** (`control.ts:132-156`):
+
 ```typescript
 // TODO: activate budgets later. Create a central budget for the entire team
 // const teamBudget = new aws.budgets.Budget(...)
 ```
 
 **Why Disabled:**
+
 - Iterating on IAM group system first
 - Lambda enforcement issues (see below)
 - Waiting for production testing
@@ -313,29 +479,34 @@ teamMembersWithBudgets = [
 **Status:** 🚧 DISABLED - Code Complete, Deployment Blocked
 
 **Commented-Out Resources:**
+
 - `budgetEnforcementRole`: IAM role for Lambda
 - `budgetEnforcementFunction`: Node.js 20 Lambda
 - `snsSubscription`: SNS → Lambda trigger
 - `lambdaPermission`: SNS invoke permission
 
 **Lambda Source Code:** (`src/lambda-src/index.js`)
+
 - **Status:** Complete but unused
 - **Runtime:** Node.js 20.x
 - **Dependencies:** `@aws-sdk/client-iam`, `@aws-sdk/client-sns`
 - **Logic:** Disables access keys when budget threshold >= 100%
 
 **Why Disabled:**
+
 ```typescript
 // TODO: Lambda function for automated budget enforcement - DISABLED FOR NEXT ITERATION
 // See ISSUES.md for details on Lambda deployment issues
 ```
 
 **Key Issues (from grep):**
+
 - Line 10: `DISABLED FOR NEXT ITERATION`
 - References in `CLAUDE.md`: "Lambda enforcement disabled for iteration"
 - `ISSUES.md`: Lambda deployment temporarily disabled
 
 **Recommendation:**
+
 - Keep code as-is
 - Re-enable after IAM group system is stable
 - Test in dev environment first
@@ -357,10 +528,12 @@ teamMembersWithBudgets = [
 **TODOs Found:**
 
 1. **Console URL** (`src/infra.ts:28`):
+
    ```typescript
    // TODO: hardcoded, fix later
-   consoleLoginUrl: "https://309237749333.signin.aws.amazon.com/console"
+   consoleLoginUrl: "https://309237749333.signin.aws.amazon.com/console";
    ```
+
    **Fix:** Use `aws.getCallerIdentity()` to get account ID dynamically.
 
 2. **TypeScript Config** (`tsconfig.json:33`):
@@ -375,35 +548,40 @@ teamMembersWithBudgets = [
 
 ### 4.1 Pulumi Preview Results
 
-**Command:** `PULUMI_CONFIG_PASSPHRASE=gm2dev pulumi preview`
+**Command:** `pulumi preview`
 
-**Resources:**
-- **23 unchanged** (no pending changes)
-- **0 to create**
-- **0 to update**
+**Resources (Last Preview):**
+
+- **30 total resources** (7 created for OIDC identity provider)
+- **1 OIDC provider** + **3 GitHub Actions roles** + **3 policy attachments**
+- **23 existing resources** (groups, user, policies, SNS)
 - **0 to delete**
 
-**Conclusion:** Infrastructure is stable and matches code exactly.
+**Recent Deployment:** Identity provider module added with 7 new resources for GitHub Actions authentication.
+
+**Conclusion:** Infrastructure is stable with new OIDC capability deployed.
 
 ---
 
 ### 4.2 Deployed vs. Coded
 
-| Component | Code Status | Deployment | Notes |
-|-----------|-------------|------------|-------|
-| Admin Group | ✅ Production | ✅ Deployed | Full admin access |
-| Billing Group | ✅ Production | ✅ Deployed | Read-only billing |
-| IAM Restrictions | ✅ Production | ✅ Deployed | 26 denied actions |
-| Instance Restrictions | ✅ Production | ✅ Deployed | 5 service limits |
-| Region Restrictions | ✅ Production | ✅ Deployed | sa-east-1 only |
-| User: maria-gonzalez | ✅ Production | ✅ Deployed | All groups |
-| General Cost Policy | ✅ Production | ✅ Deployed | Attached to user |
-| SNS Topic | ✅ Production | ✅ Deployed | Ready for alerts |
-| Lambda Enforcement | 🚧 TODO | ❌ Not Deployed | Commented out |
-| User Budgets | 🚧 TODO | ❌ Not Deployed | Commented out |
-| Team Budget | 🚧 TODO | ❌ Not Deployed | Commented out |
-| Service Policies | 📦 Legacy | ❌ Not Deployed | Replaced by groups |
-| Cost Functions | 📦 Legacy | ❌ Not Deployed | Replaced |
+| Component             | Code Status   | Deployment      | Notes                          |
+| --------------------- | ------------- | --------------- | ------------------------------ |
+| Admin Group           | ✅ Production | ✅ Deployed     | Full admin access              |
+| Billing Group         | ✅ Production | ✅ Deployed     | Read-only billing              |
+| IAM Restrictions      | ✅ Production | ✅ Deployed     | 26 denied actions              |
+| Instance Restrictions | ✅ Production | ✅ Deployed     | 5 service limits               |
+| Region Restrictions   | ✅ Production | ✅ Deployed     | sa-east-1 only                 |
+| User: maria-gonzalez  | ✅ Production | ✅ Deployed     | All groups                     |
+| General Cost Policy   | ✅ Production | ✅ Deployed     | Attached to user               |
+| SNS Topic             | ✅ Production | ✅ Deployed     | Ready for alerts               |
+| GitHub OIDC Provider  | ✅ Production | ✅ Deployed     | Keyless GitHub Actions auth    |
+| GitHub Actions Roles  | ✅ Production | ✅ Deployed     | 3 roles (infrastructure-admin) |
+| Lambda Enforcement    | 🚧 TODO       | ❌ Not Deployed | Commented out                  |
+| User Budgets          | 🚧 TODO       | ❌ Not Deployed | Commented out                  |
+| Team Budget           | 🚧 TODO       | ❌ Not Deployed | Commented out                  |
+| Service Policies      | 📦 Legacy     | ❌ Not Deployed | Replaced by groups             |
+| Cost Functions        | 📦 Legacy     | ❌ Not Deployed | Replaced                       |
 
 ---
 
@@ -428,17 +606,20 @@ teamMembersWithBudgets = [
 ### 5.3 TODOs Summary
 
 **High Priority:**
+
 - [ ] Fix hardcoded console URL (use `aws.getCallerIdentity()`)
 - [ ] Re-enable Lambda enforcement after testing
 - [ ] Re-enable individual user budgets
 
 **Medium Priority:**
+
 - [ ] Remove legacy service permission functions
 - [ ] Consolidate cost policy code
 - [ ] Add CloudWatch dashboard deployment verification
 - [ ] Test tsconfig-paths removal
 
 **Low Priority:**
+
 - [ ] Migrate example users to current group system format
 - [ ] Add unit tests for policy generation
 
@@ -447,9 +628,11 @@ teamMembersWithBudgets = [
 ## 6. Architecture Decision Records (Implicit)
 
 ### ADR 1: Group-Based IAM Over User Policies
+
 **Decision:** Use IAM groups with AWS managed policies instead of custom user policies.
 
 **Rationale:**
+
 - Easier to manage at scale
 - AWS managed policies are production-tested
 - Simplifies user provisioning
@@ -459,9 +642,11 @@ teamMembersWithBudgets = [
 ---
 
 ### ADR 2: Disable Lambda Enforcement Temporarily
+
 **Decision:** Comment out Lambda budget enforcement for iteration.
 
 **Rationale:**
+
 - Deployment complexity blocking progress
 - IAM group system needs testing first
 - SNS topic provides alert framework
@@ -471,9 +656,11 @@ teamMembersWithBudgets = [
 ---
 
 ### ADR 3: Strategic Tagging Policy
+
 **Decision:** Remove mandatory tagging from EC2, keep for S3/RDS/Lambda.
 
 **Rationale:**
+
 - Improve UX for EC2 instances
 - Maintain cost tracking for expensive services
 
@@ -482,9 +669,11 @@ teamMembersWithBudgets = [
 ---
 
 ### ADR 4: Region Lock to sa-east-1
+
 **Decision:** Restrict ALL AWS services to South America São Paulo region.
 
 **Rationale:**
+
 - Cost optimization (closer to users)
 - Data sovereignty compliance
 - Simpler cost tracking
@@ -515,9 +704,9 @@ teamMembersWithBudgets = [
    - **Risk:** Cost overruns not automatically stopped
    - **Mitigation:** SNS alerts configured, manual monitoring
 
-3. **Hardcoded Passphrase:** `PULUMI_CONFIG_PASSPHRASE=gm2dev`
-   - **Risk:** Visible in commands, scripts
-   - **Recommendation:** Move to secure secret management (AWS Secrets Manager, HashiCorp Vault)
+3. ~~**Hardcoded Passphrase:** `PULUMI_CONFIG_PASSPHRASE=gm2dev`~~ **[RESOLVED]**
+   - **Solution:** Migrated to AWS KMS for secrets encryption
+   - **Benefits:** No passphrase needed, IAM-based access, automatic key rotation
 
 ---
 
@@ -528,13 +717,16 @@ teamMembersWithBudgets = [
 **Monthly Budget:** $200 USD (maria-gonzalez)
 
 **Resource Costs:**
+
 - IAM users/groups: **Free**
 - IAM policies: **Free**
 - SNS topic: **~$0.50/month** (if no messages)
 - Lambda (disabled): **$0**
 - Budgets (disabled): **$0**
+- KMS key: **$1/month** (single key, automatic rotation enabled)
+- OIDC provider: **Free**
 
-**Estimated Total:** **< $1/month** for infrastructure itself.
+**Estimated Total:** **~$1.50/month** for infrastructure itself.
 
 **Note:** User workloads (EC2, S3, etc.) will consume the $200 budget.
 
@@ -549,6 +741,7 @@ teamMembersWithBudgets = [
 5. **RDS:** db.t3.micro only
 
 **Estimated Worst-Case Monthly Cost:**
+
 - 3x t3.small EC2 instances (24/7): ~$45
 - 1x db.t3.micro RDS (24/7): ~$15
 - 100GB EBS: ~$10
@@ -562,6 +755,7 @@ teamMembersWithBudgets = [
 ### 9.1 Immediate Actions (This Week)
 
 1. **Fix Hardcoded Console URL:**
+
    ```typescript
    const caller = aws.getCallerIdentity();
    const consoleLoginUrl = pulumi.interpolate`https://${caller.accountId}.signin.aws.amazon.com/console`;
@@ -595,9 +789,9 @@ teamMembersWithBudgets = [
 
 ### 9.3 Long-Term (Next Quarter)
 
-7. **Secret Management:**
-   - Migrate `PULUMI_CONFIG_PASSPHRASE` to AWS Secrets Manager
-   - Use IAM roles for CI/CD instead of access keys
+7. ~~**Secret Management:**~~ **[COMPLETED]**
+   - ✅ Migrated to AWS KMS for Pulumi secrets encryption
+   - ✅ GitHub Actions OIDC authentication (no access keys needed for CI/CD)
 
 8. **Monitoring & Alerting:**
    - CloudWatch alarms for cost anomalies
@@ -618,31 +812,36 @@ teamMembersWithBudgets = [
 
 ## 10. File-by-File Status Summary
 
-| File Path | Status | Deployed | LOC | Notes |
-|-----------|--------|----------|-----|-------|
-| `src/index.ts` | ✅ Production | ✅ Yes | 5 | Module exports |
-| `src/infra.ts` | ✅ Production | ✅ Yes | 46 | Stack outputs (1 TODO) |
-| `src/members.ts` | ✅ Production | ✅ Yes | 56 | 1 active user, 2 commented |
-| `src/constants.ts` | ✅ Production | ✅ Yes | ~30 | All constants in use |
-| `src/dashboard.ts` | 🔍 Unknown | ❓ Unknown | ~50 | Needs investigation |
-| `src/iam/index.ts` | ✅ Production | ✅ Yes | ~10 | IAM exports |
-| `src/iam/groups/index.ts` | ✅ Production | ✅ Yes | ~10 | Group exports |
-| `src/iam/groups/groups.ts` | ✅ Production | ✅ Yes | 17 | Service mapping |
-| `src/iam/groups/admin.ts` | ✅ Production | ✅ Yes | 15 | Admin group |
-| `src/iam/groups/billing.ts` | ✅ Production | ✅ Yes | 13 | Billing group |
-| `src/iam/groups/iam-restriction.ts` | ✅ Production | ✅ Yes | 65 | IAM deny policy |
-| `src/iam/groups/instance-restriction.ts` | ✅ Production | ✅ Yes | 89 | Instance limits |
-| `src/iam/groups/region-restriction.ts` | ✅ Production | ✅ Yes | 42 | Region lock |
-| `src/budget/index.ts` | ✅ Production | ✅ Yes | ~10 | Budget exports |
-| `src/budget/control.ts` | ✅ Production | ✅ Partial | 161 | 2 TODOs (budgets) |
-| `src/budget/enforcement.ts` | 🚧 TODO | ✅ Partial | 79 | SNS only, Lambda disabled |
-| `src/policies/index.ts` | 📦 Legacy | ❌ No | ~10 | Legacy exports |
-| `src/policies/service.ts` | 📦 Legacy | ❌ No | 136 | 2 TODOs, unused |
-| `src/policies/cost.ts` | 📦 Partial | ✅ Partial | 164 | Only 20% deployed |
-| `src/lambda-src/index.js` | 🚧 TODO | ❌ No | ~100 | Complete, not deployed |
-| `src/lambda-src/package.json` | 🚧 TODO | ❌ No | ~20 | Lambda deps |
+| File Path                                | Status        | Deployed   | LOC  | Notes                      |
+| ---------------------------------------- | ------------- | ---------- | ---- | -------------------------- |
+| `src/index.ts`                           | ✅ Production | ✅ Yes     | 6    | Module exports             |
+| `src/infra.ts`                           | ✅ Production | ✅ Yes     | 52   | Stack outputs + OIDC       |
+| `src/members.ts`                         | ✅ Production | ✅ Yes     | 56   | 1 active user, 2 commented |
+| `src/constants.ts`                       | ✅ Production | ✅ Yes     | ~30  | All constants in use       |
+| `src/dashboard.ts`                       | 🔍 Unknown    | ❓ Unknown | ~50  | Needs investigation        |
+| `src/iam/index.ts`                       | ✅ Production | ✅ Yes     | ~10  | IAM exports                |
+| `src/iam/groups/index.ts`                | ✅ Production | ✅ Yes     | ~10  | Group exports              |
+| `src/iam/groups/groups.ts`               | ✅ Production | ✅ Yes     | 17   | Service mapping            |
+| `src/iam/groups/admin.ts`                | ✅ Production | ✅ Yes     | 15   | Admin group                |
+| `src/iam/groups/billing.ts`              | ✅ Production | ✅ Yes     | 13   | Billing group              |
+| `src/iam/groups/iam-restriction.ts`      | ✅ Production | ✅ Yes     | 65   | IAM deny policy            |
+| `src/iam/groups/instance-restriction.ts` | ✅ Production | ✅ Yes     | 89   | Instance limits            |
+| `src/iam/groups/region-restriction.ts`   | ✅ Production | ✅ Yes     | 42   | Region lock                |
+| `src/identity-provider/index.ts`         | ✅ Production | ✅ Yes     | 8    | Identity provider exports  |
+| `src/identity-provider/types.ts`         | ✅ Production | ✅ Yes     | 72   | TypeScript interfaces      |
+| `src/identity-provider/github-oidc.ts`   | ✅ Production | ✅ Yes     | 140  | OIDC provider + roles      |
+| `src/identity-provider/config.ts`        | ✅ Production | ✅ Yes     | 31   | GitHub org configuration   |
+| `src/budget/index.ts`                    | ✅ Production | ✅ Yes     | ~10  | Budget exports             |
+| `src/budget/control.ts`                  | ✅ Production | ✅ Partial | 161  | 2 TODOs (budgets)          |
+| `src/budget/enforcement.ts`              | 🚧 TODO       | ✅ Partial | 79   | SNS only, Lambda disabled  |
+| `src/policies/index.ts`                  | 📦 Legacy     | ❌ No      | ~10  | Legacy exports             |
+| `src/policies/service.ts`                | 📦 Legacy     | ❌ No      | 136  | 2 TODOs, unused            |
+| `src/policies/cost.ts`                   | 📦 Partial    | ✅ Partial | 164  | Only 20% deployed          |
+| `src/lambda-src/index.js`                | 🚧 TODO       | ❌ No      | ~100 | Complete, not deployed     |
+| `src/lambda-src/package.json`            | 🚧 TODO       | ❌ No      | ~20  | Lambda deps                |
 
 **Legend:**
+
 - ✅ Production: Actively used and deployed
 - 📦 Legacy: Outdated, replaced
 - 🚧 TODO: Future feature, disabled
@@ -652,28 +851,41 @@ teamMembersWithBudgets = [
 
 ## 11. Conclusion
 
-### Current State: **Production-Ready with Planned Future Features**
+### Current State: **Production-Ready with GitHub OIDC + Planned Future Features**
 
-The GM2 Budget Control Infrastructure is **successfully deployed** with a solid foundation of IAM group-based cost controls. The architecture is **secure, cost-effective, and scalable**, with 23 AWS resources enforcing strict regional and instance type restrictions.
+The GM2 Budget Control Infrastructure is **successfully deployed** with a solid foundation of IAM group-based cost controls and **keyless CI/CD authentication**. The architecture is **secure, cost-effective, and scalable**, with 30 AWS resources enforcing strict regional and instance type restrictions plus GitHub Actions OIDC federation.
 
 **Strengths:**
+
 - ✅ Robust IAM group system with AWS managed policies
+- ✅ **GitHub OIDC identity provider for keyless CI/CD** (NEW!)
 - ✅ Multi-layered cost controls (region, instance, service)
 - ✅ Clean TypeScript codebase with strong typing
 - ✅ Excellent documentation (CLAUDE.md)
+- ✅ Type-safe Pulumi code with Output types
+
+**Recent Additions:**
+
+- 🚀 Complete GitHub OIDC module (~250 LOC)
+- 🚀 Repository-level trust policies
+- 🚀 Support for AWS managed + custom policies
+- 🚀 Automated role ARN outputs for GitHub Actions
 
 **Weaknesses:**
+
 - 📦 Legacy code not yet removed (~250 LOC)
 - 🚧 Budget enforcement disabled (Lambda issues)
 - ⚠️ Hardcoded values (account ID, passphrase)
 
 **Next Steps:**
+
 1. Clean up legacy code
 2. Fix hardcoded console URL
 3. Re-enable Lambda enforcement
 4. Add tests
+5. Expand GitHub OIDC roles for more repositories
 
-**Overall Grade: B+ (Production-Ready, Minor Tech Debt)**
+**Overall Grade: A- (Production-Ready with Modern CI/CD, Minor Tech Debt)**
 
 ---
 

@@ -4,9 +4,8 @@ import * as aws from "@pulumi/aws";
 
 export const iamRestrictionsGroup = new aws.iam.Group("iam-restrictions-group", {
   name: "IamRestrictions",
-  path: "/restrictions/"
+  path: "/restrictions/",
 });
-
 
 export const iamRestrictionsPolicy = new aws.iam.GroupPolicy("iam-user-mgmt-restriction", {
   group: iamRestrictionsGroup.name,
@@ -55,10 +54,10 @@ export const iamRestrictionsPolicy = new aws.iam.GroupPolicy("iam-user-mgmt-rest
 
           // Tags
           "iam:TagUser",
-          "iam:UntagUser"
+          "iam:UntagUser",
         ],
-        Resource: "*"
-      }
-    ]
-  })
+        Resource: "*",
+      },
+    ],
+  }),
 });
