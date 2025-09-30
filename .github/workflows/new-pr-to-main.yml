@@ -65,4 +65,4 @@ jobs:
           pulumi stack select dev
       - name: Pulumi preview
         run: |
-          pulumi preview
+          bun run pulumi preview
