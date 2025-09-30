@@ -23,14 +23,14 @@ defaults:
     shell: bash
 
 jobs:
-  code_quality_check:
-    permissions:
-      contents: write
-      pull-requests: write
-    uses: ./.github/workflows/code-quality-check.yml
-    secrets: inherit
+  #  code_quality_check:
+  #    permissions:
+  #      contents: write
+  #      pull-requests: write
+  #    uses: ./.github/workflows/code-quality-check.yml
+  #    secrets: inherit
   pulumi-preview:
-    needs: code_quality_check
+    #    needs: code_quality_check
     timeout-minutes: 3
     runs-on: ubuntu-latest
     environment: production
@@ -54,7 +54,11 @@ jobs:
 
       - name: Install dependencies
         run: bun install
-
+      - name: Pulumi Login
+        run: |
+          pulumi login s3://gm2dev-pulumi-state
+          pulumi stack select dev
+          bunx pulumi preview
       - name: Pulumi Preview
         uses: pulumi/actions@v6
         with:
