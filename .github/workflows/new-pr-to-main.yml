@@ -48,22 +48,28 @@ jobs:
           role-to-assume: ${{ secrets.AWS_INFRASTRUCTURE_ADMIN_CD }}
           aws-region: ${{ secrets.AWS_REGION }}
 
+      - uses: actions/setup-node@v5
+        with:
+          node-version: 24.7.0
+
       - uses: oven-sh/setup-bun@v2
         with:
           bun-version: "latest"
 
       - name: Install dependencies
-        run: bun install
+        run: |
+          node --version
+          bun install
       - name: Pulumi Login
         run: |
           pulumi login s3://gm2dev-pulumi-state
           pulumi stack select dev
-          eval "$(/home/linuxbrew/.linuxbrew/bin/brew shellenv)"
-          echo $PATH
-          which node
+          #eval "$(/home/linuxbrew/.linuxbrew/bin/brew shellenv)"
+          #echo $PATH
+          #which node
           #brew install pulumi
-          brew install nodejs
-          which node
+          #brew install nodejs
+          #which node
           bunx pulumi preview
       - name: Pulumi Preview
         uses: pulumi/actions@v6
