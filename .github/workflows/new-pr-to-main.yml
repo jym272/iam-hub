@@ -63,7 +63,6 @@ jobs:
           which node
           brew install pulumi
           brew install nodejs
-          brew install bun
           bunx pulumi preview
       - name: Pulumi Preview
         uses: pulumi/actions@v6
