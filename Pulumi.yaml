@@ -1,5 +1,9 @@
 name: team-budget-control
-runtime: nodejs
+runtime:
+  name: nodejs
+  options:
+    typescript: true
+    packagemanager: bun
 description: Team IAM management with individual budget controls and enforcement
 main: ./src/infra.ts
 
