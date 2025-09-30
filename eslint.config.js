@@ -35,5 +35,5 @@ export default defineConfig([
   // { files: ["**/*.jsonc"], plugins: { json }, language: "json/jsonc", extends: ["json/recommended"] },
   // { files: ["**/*.md"], plugins: { markdown }, language: "markdown/commonmark", extends: ["markdown/recommended"] },
   prettier, // This should be last to override other formatting rules
-  { ignores: ["tsconfig.json"] },
+  { ignores: ["tsconfig.json", "dist"] },
 ]);

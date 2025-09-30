@@ -23,14 +23,14 @@ defaults:
     shell: bash
 
 jobs:
-  #  code_quality_check:
-  #    permissions:
-  #      contents: write
-  #      pull-requests: write
-  #    uses: ./.github/workflows/code-quality-check.yml
-  #    secrets: inherit
+  code_quality_check:
+    permissions:
+      contents: write
+      pull-requests: write
+    uses: ./.github/workflows/code-quality-check.yml
+    secrets: inherit
   pulumi-preview:
-    #    needs: code_quality_check
+    needs: code_quality_check
     timeout-minutes: 3
     runs-on: ubuntu-latest
     environment: production
@@ -50,6 +50,7 @@ jobs:
 
       - uses: actions/setup-node@v5
         with:
+          # Necesita node con soporte nativo typescript --> Node.js 23.6.0 or later.
           node-version: 24.7.0
 
       - uses: oven-sh/setup-bun@v2

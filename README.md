@@ -6,6 +6,11 @@
 
 `console`: https://309237749333.signin.aws.amazon.com/console
 
+`dep`
+
+- Node.js 23.6.0 or later.
+- bun
+
 To install dependencies:
 
 ```bash

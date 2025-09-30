@@ -94,6 +94,7 @@ This is a Pulumi-based AWS infrastructure project that implements comprehensive 
 - **Module Resolution**: Requires `.ts` extensions for bundler compatibility
 - **Runtime**: Node.js 20.x ready for Lambda functions
 - **SDK**: AWS SDK v3 compatible
+- **⚠️ CRITICAL**: **Node.js 23.6.0 or later required** for Pulumi operations (CI/CD workflows must use Node.js 23+)
 
 ## Updated File Structure
 
@@ -276,6 +277,23 @@ jobs:
 The module automatically detects which format you're using by checking if the string starts with `"arn:"`.
 
 ## Common Issues & Fixes
+
+### ⚠️ Node.js Version Requirement (CI/CD)
+
+**CRITICAL**: This project requires **Node.js 23.6.0 or later** to run Pulumi commands.
+
+**Problem**: GitHub Actions default runners use Node.js 20.x, which causes Pulumi to fail.
+
+**Solution**: Configure your CI/CD workflow to use Node.js 23+:
+
+```yaml
+- name: Setup Node.js
+  uses: actions/setup-node@v4
+  with:
+    node-version: "23.6.0"
+```
+
+**Why**: The project's TypeScript configuration and Pulumi operations depend on features only available in Node.js 23+. Installing Node.js via Homebrew in CI (which installs v24) works but is unnecessary if you configure the action runner correctly.
 
 ### Import Issues
 
