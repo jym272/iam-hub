@@ -59,6 +59,9 @@ jobs:
           pulumi login s3://gm2dev-pulumi-state
           pulumi stack select dev
           eval "$(/home/linuxbrew/.linuxbrew/bin/brew shellenv)"
+          brew install pulumi
+          brew install nodejs
+          brew install bun
           bunx pulumi preview
       - name: Pulumi Preview
         uses: pulumi/actions@v6
