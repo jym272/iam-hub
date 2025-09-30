@@ -61,8 +61,9 @@ jobs:
           eval "$(/home/linuxbrew/.linuxbrew/bin/brew shellenv)"
           echo $PATH
           which node
-          brew install pulumi
-          #brew install nodejs
+          #brew install pulumi
+          brew install nodejs
+          which node
           bunx pulumi preview
       - name: Pulumi Preview
         uses: pulumi/actions@v6
