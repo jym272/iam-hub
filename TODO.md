@@ -44,3 +44,4 @@ Diagnostics:
 - Admin, todos, restringo instancias grandes y restringo region. el control sería por VPC, se
   solicita incremento de vpc.
 - AGREGAR REGION A LOS USERS/MEMBERS, cada user elige sus regiones!
+- CREAR un manual para instalar aws en entorno local y configurarlo con aws config
