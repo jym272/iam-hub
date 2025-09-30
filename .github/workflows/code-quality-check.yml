@@ -1,0 +1,43 @@
+name: reusable-code_quality_check
+on:
+  workflow_call:
+env:
+  FORCE_COLOR: 3
+defaults:
+  run:
+    shell: bash
+
+jobs:
+  lint:
+    timeout-minutes: 2
+    runs-on: ubuntu-latest
+    steps:
+      - name: Checkout code
+        uses: actions/checkout@v5
+        with:
+          repository: ${{ github.event.pull_request.head.repo.full_name }}
+          ref: ${{ github.event.pull_request.head.ref }}
+
+      - uses: oven-sh/setup-bun@v2
+        with:
+          bun-version: 'latest'
+
+      - name: CI the project
+        run: |
+          TIMING=1 make all
+      - name: Check if files changed
+        id: check-if-files-changed
+        continue-on-error: true
+        run: |
+          git diff --quiet
+      - name: Commit the changes
+        if: ${{ steps.check-if-files-changed.outcome == 'failure' }}
+        uses: EndBug/add-and-commit@v9
+        with:
+          author_name: github-actions[bot]
+          author_email: github-actions[bot]@users.noreply.github.com
+          default_author: github_actor
+          message: 'Commit from GitHub Actions (lint_fix)'
+          fetch: false
+          pathspec_error_handling: ignore
+          push: true

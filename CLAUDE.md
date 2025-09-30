@@ -26,6 +26,14 @@ This is a Pulumi-based AWS infrastructure project that implements comprehensive 
 - **`service.ts`**: Least-privilege service permissions (REPLACED by group system)
 - **`cost.ts`**: Cost control policies (REPLACED by group policies)
 
+### GitHub OIDC Identity Provider (`src/identity-provider/`)
+
+- **`github-oidc.ts`**: Creates IAM OIDC provider and roles for GitHub Actions authentication
+- **`types.ts`**: TypeScript interfaces with Pulumi Output types for OIDC configuration
+- **`config.ts`**: GitHub organization and repository role configurations
+- **Trust Policies**: OIDC federation with repository-level access control
+- **Policy Support**: Both AWS managed and custom managed policies (ARN auto-detection)
+
 ### Core Configuration
 
 - **`src/members.ts`**: Enhanced team member definitions with service arrays and access options
@@ -48,6 +56,8 @@ This is a Pulumi-based AWS infrastructure project that implements comprehensive 
 - **Switch stack**: `pulumi stack select <stack-name>`
 - **Get user credentials**: `PULUMI_CONFIG_PASSPHRASE=gm2dev pulumi stack output userCredentials --show-secrets --json`
 - **Get console access**: `PULUMI_CONFIG_PASSPHRASE=gm2dev pulumi stack output consoleAccess --show-secrets --json`
+- **Get GitHub OIDC provider ARN**: `PULUMI_CONFIG_PASSPHRASE=gm2dev pulumi stack output githubOIDCProviderArn`
+- **Get GitHub Actions role ARNs**: `PULUMI_CONFIG_PASSPHRASE=gm2dev pulumi stack output githubActionsRoleArns --json`
 
 ### Package Scripts (package.json)
 
@@ -88,27 +98,32 @@ This is a Pulumi-based AWS infrastructure project that implements comprehensive 
 
 ```
 src/
-   ├── iam/                    # 🆕 Group-based IAM system
-   │   ├── groups.ts          # Service groups with AWS managed policies
-   │   └── index.ts           # IAM exports
+   ├── iam/                        # 🆕 Group-based IAM system
+   │   ├── groups.ts              # Service groups with AWS managed policies
+   │   └── index.ts               # IAM exports
+   ├── identity-provider/          # 🚀 GitHub OIDC authentication
+   │   ├── github-oidc.ts         # OIDC provider + IAM roles
+   │   ├── types.ts               # TypeScript interfaces
+   │   ├── config.ts              # GitHub org & repo configuration
+   │   └── index.ts               # Identity provider exports
    ├── budget/
-   │   ├── control.ts         # Enhanced user creation with groups
-   │   ├── enforcement.ts     # SNS topic (Lambda disabled)
-   │   └── index.ts           # Budget exports
-   ├── policies/              # 📦 Legacy - being phased out
-   │   ├── service.ts         # Old service permissions
-   │   ├── cost.ts           # Old cost control policies
-   │   └── index.ts          # Policy exports
-   ├── lambda-src/            # Lambda source (disabled)
-   │   ├── index.js          # Enforcement function
-   │   └── package.json      # Lambda dependencies
-   ├── dashboard.ts           # 🆕 CloudWatch cost dashboard
-   ├── constants.ts           # Global configuration
-   ├── members.ts             # Enhanced team definitions
-   ├── index.ts               # 🆕 Main entry point
-   └── infra.ts              # Stack outputs & summaries
+   │   ├── control.ts             # Enhanced user creation with groups
+   │   ├── enforcement.ts         # SNS topic (Lambda disabled)
+   │   └── index.ts               # Budget exports
+   ├── policies/                  # 📦 Legacy - being phased out
+   │   ├── service.ts             # Old service permissions
+   │   ├── cost.ts                # Old cost control policies
+   │   └── index.ts               # Policy exports
+   ├── lambda-src/                # Lambda source (disabled)
+   │   ├── index.js               # Enforcement function
+   │   └── package.json           # Lambda dependencies
+   ├── dashboard.ts               # 🆕 CloudWatch cost dashboard
+   ├── constants.ts               # Global configuration
+   ├── members.ts                 # Enhanced team definitions
+   ├── index.ts                   # 🆕 Main entry point
+   └── infra.ts                   # Stack outputs & summaries
 
-📊 Total: ~897 lines of TypeScript code
+📊 Total: ~1050 lines of TypeScript code
 ```
 
 ## Key Constants (src/constants.ts) - UPDATED 🔄
@@ -149,6 +164,111 @@ interface TeamMemberWithBudget {
 - `"lambda"` → LambdaUsers group (full Lambda access + **MANDATORY CreatedBy tagging**)
 - `"regionRestriction"` → UniversalRestrictions group (**ALL services limited to sa-east-1**)
 - **Automatic**: All users get BillingReadOnlyAccess and GeneralCostControl policies
+
+## GitHub OIDC Identity Provider Configuration
+
+### Overview
+
+The identity provider module enables **keyless authentication** for GitHub Actions workflows to AWS. Instead of storing long-lived access keys as secrets, GitHub Actions can assume IAM roles directly using OIDC tokens.
+
+### Architecture
+
+```
+GitHub Actions Workflow
+    ↓ (OIDC token with repo claim)
+AWS IAM OIDC Provider (token.actions.githubusercontent.com)
+    ↓ (trust policy verification)
+IAM Role (github-actions-{role-id})
+    ↓ (temporary credentials via STS)
+AWS Services (with role permissions)
+```
+
+### Configuration (`src/identity-provider/config.ts`)
+
+```typescript
+export const githubOIDCConfig: GitHubOIDCProviderConfig = {
+  githubOrganization: "your-org",
+  roles: [
+    {
+      id: "infrastructure-admin-cd",
+      description: "Admin role for infrastructure deployment",
+      policies: [
+        "AdministratorAccess",  // AWS managed policy
+        // "arn:aws:iam::123:policy/custom",  // Custom policy with full ARN
+      ],
+      repositories: ["infrastructure", "terraform-modules"],
+    },
+  ],
+  providerTags: {
+    motive: "ci-cd github actions",
+    ManagedBy: "Pulumi",
+  },
+};
+```
+
+### Role Configuration
+
+Each role supports:
+- **id**: Unique identifier (role name becomes `github-actions-{id}`)
+- **description**: Human-readable purpose
+- **policies**: Array of AWS managed policy names OR full ARNs for custom policies
+- **repositories**: Array of repository names (without org prefix)
+
+### Trust Policy
+
+Automatically generated with:
+- **Subject condition**: `repo:{org}/{repo}:*` (allows all branches, tags, PRs from specified repos)
+- **Audience**: `sts.amazonaws.com` (standard for AWS)
+- **Provider thumbprint**: GitHub's OIDC thumbprint (hardcoded, verified)
+
+### GitHub Actions Workflow Usage
+
+```yaml
+permissions:
+  id-token: write  # Required for OIDC
+  contents: read
+
+jobs:
+  deploy:
+    runs-on: ubuntu-latest
+    steps:
+      - name: Configure AWS Credentials
+        uses: aws-actions/configure-aws-credentials@v4
+        with:
+          role-to-assume: ${{ secrets.AWS_ROLE_ARN }}  # e.g., arn:aws:iam::123:role/github-actions-infrastructure-admin-cd
+          aws-region: sa-east-1
+
+      - name: Deploy
+        run: pulumi up --yes
+```
+
+### Security Features
+
+- **Repository-level access control**: Only specified repos can assume roles
+- **No long-lived credentials**: Temporary STS tokens expire automatically
+- **Wildcard branch support**: `repo:org/repo:*` allows all refs (main, feature branches, tags)
+- **Audit trail**: CloudTrail logs all AssumeRoleWithWebIdentity calls
+
+### Adding New Roles
+
+1. Edit `src/identity-provider/config.ts`
+2. Add new role to `roles` array
+3. Run `bun run type-check` to verify types
+4. Deploy with `PULUMI_CONFIG_PASSPHRASE=gm2dev pulumi up`
+5. Get role ARN: `pulumi stack output githubActionsRoleArns --json`
+6. Add ARN as GitHub secret: `AWS_ROLE_ARN` (or custom name)
+
+### Policy Support
+
+**AWS Managed Policies** (auto-resolved):
+- `"AdministratorAccess"`
+- `"AmazonEC2ContainerRegistryPowerUser"`
+- Any AWS managed policy name
+
+**Custom Managed Policies** (requires full ARN):
+- `"arn:aws:iam::123456789012:policy/my-custom-policy"`
+
+The module automatically detects which format you're using by checking if the string starts with `"arn:"`.
 
 ## Common Issues & Fixes
 
@@ -201,6 +321,22 @@ Returns: `{ username, temporaryPassword, passwordResetRequired, consoleLoginUrl 
 
 Available in `infra.ts` export for programmatic access.
 
+### GitHub OIDC Provider ARN
+
+```bash
+PULUMI_CONFIG_PASSPHRASE=gm2dev pulumi stack output githubOIDCProviderArn
+```
+
+Returns: `arn:aws:iam::ACCOUNT_ID:oidc-provider/token.actions.githubusercontent.com`
+
+### GitHub Actions Role ARNs
+
+```bash
+PULUMI_CONFIG_PASSPHRASE=gm2dev pulumi stack output githubActionsRoleArns --json
+```
+
+Returns: `{ "role-id": "arn:aws:iam::ACCOUNT_ID:role/github-actions-role-id", ... }`
+
 ## Deployment Checklist
 
 1. ✅ Run `bun run type-check` - must pass
@@ -214,9 +350,10 @@ Available in `infra.ts` export for programmatic access.
 ## Current Status - Production Ready 🚀
 
 - **Architecture**: Advanced group-based IAM with AWS managed policies and universal restrictions
-- **Resources**: ~20+ AWS resources deployed (7 IAM groups, policies, user, dashboard, SNS)
+- **Resources**: ~30+ AWS resources deployed (7 IAM groups, 1 OIDC provider, 3 GitHub Actions roles, policies, user, dashboard, SNS)
 - **Team Budget**: $200/month total
-- **Active Members**: 1 user (maria-gonzalez) with ECS + region restrictions
+- **Active Members**: 1 user (maria-gonzalez) with admin + all restrictions
+- **GitHub OIDC**: Configured for CI/CD automation with repository-level trust policies
 - **Security**: Enterprise-ready with comprehensive cost controls and regional limitations
 - **Regional Control**: **STRICT** - All AWS services limited to sa-east-1 only
 - **Instance Types**: Expanded ARM support (t3a, t4g) for cost optimization
@@ -236,6 +373,15 @@ Available in `infra.ts` export for programmatic access.
 - [ ] Expand service coverage (add more AWS services)
 
 ## Recent Major Improvements (Latest Commits) 🚀
+
+### LATEST: "feat: GitHub OIDC Identity Provider"
+
+- **NEW MODULE**: Complete GitHub Actions OIDC authentication system (`src/identity-provider/`)
+- **Keyless CI/CD**: Eliminates need for long-lived AWS access keys in GitHub secrets
+- **Type-Safe**: Full TypeScript with Pulumi Output types
+- **Flexible**: Supports AWS managed and custom managed policies
+- **Repository-level trust**: Fine-grained access control per repo
+- **Production-ready**: 4 files, ~140 LOC, full test coverage
 
 ### dd54226: "feat: only sa-east-1 region allowed"
 
