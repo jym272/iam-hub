@@ -2,6 +2,7 @@ import * as aws from "@pulumi/aws";
 import { teamMembersWithBudgets } from "../members.ts";
 import { serviceToGroup, billingGroup, type ServiceName } from "../iam/index.ts";
 import { generalCostControlPolicy } from "../policies/index.ts";
+import { createUserRegionRestrictionGroup } from "../iam/groups/region-restriction.ts";
 
 // Create account password policy for user-friendly passwords
 export const accountPasswordPolicy = new aws.iam.AccountPasswordPolicy("account-password-policy", {
@@ -29,6 +30,17 @@ export const teamResourcesWithBudgets = teamMembersWithBudgets.map((member) => {
     },
     forceDestroy: true,
   });
+
+  // Create per-user region restriction group if regions are specified
+  let regionRestrictionGroup;
+  let regionRestrictionMembership;
+  if (member.regions && member.regions.length > 0) {
+    regionRestrictionGroup = createUserRegionRestrictionGroup(member.username, member.regions);
+    regionRestrictionMembership = new aws.iam.UserGroupMembership(`user-group-${member.username}-region-restriction`, {
+      user: user.name,
+      groups: [regionRestrictionGroup.group.name],
+    });
+  }
 
   // Add user to service groups based on their required services
   const groupMemberships = member.services
@@ -120,6 +132,8 @@ export const teamResourcesWithBudgets = teamMembersWithBudgets.map((member) => {
     groupMemberships,
     billingGroupMembership,
     generalCostControlAttachment,
+    regionRestrictionGroup,
+    regionRestrictionMembership,
     accessKey,
     loginProfile,
     memberConfig: member,

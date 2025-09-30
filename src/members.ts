@@ -1,5 +1,6 @@
 // Enhanced team member interface with budget controls
 import type { ServiceName } from "@/iam";
+import type { Region } from "@/constants.ts";
 
 interface TeamMemberWithBudget {
   username: string;
@@ -7,6 +8,7 @@ interface TeamMemberWithBudget {
   monthlyBudgetUSD: number;
   needsConsoleAccess?: boolean;
   needsAccessKey?: boolean;
+  regions?: Region[]; // undefined = no restrictions, array = allowed regions
   budgetAlerts?: {
     warningThreshold: number; // percentage (e.g., 80 for 80%)
     criticalThreshold: number; // percentage (e.g., 100 for 100%)
@@ -42,7 +44,8 @@ export const teamMembersWithBudgets: TeamMemberWithBudget[] = [
   // },
   {
     username: "maria-gonzalez",
-    services: ["regionRestriction", "admin", "iamRestriction", "instancesRestriction"],
+    services: ["admin", "iamRestriction", "instancesRestriction"],
+    regions: ["sa-east-1"], // Restrict to South America region
     monthlyBudgetUSD: 200, // $200/month for serverless dev
     needsConsoleAccess: true,
     needsAccessKey: true,
