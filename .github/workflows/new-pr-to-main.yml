@@ -29,3 +29,31 @@ jobs:
       pull-requests: write
     uses: ./.github/workflows/code-quality-check.yml
     secrets: inherit
+  pulumi-preview:
+    needs: code_quality_check
+    timeout-minutes: 3
+    runs-on: ubuntu-latest
+    environment: production
+    permissions:
+      contents: "read"
+      id-token: "write"
+    steps:
+      - name: Checkout
+        uses: actions/checkout@v5
+
+      - name: AWS credentials
+        uses: aws-actions/configure-aws-credentials@v5
+        with:
+          role-to-assume: ${{ secrets.AWS_INFRASTRUCTURE_ADMIN_CD }}
+          aws-region: ${{ secrets.AWS_REGION }}
+
+      - uses: oven-sh/setup-bun@v2
+        with:
+          bun-version: "latest"
+
+      - run: |
+          bun install
+
+      - name: s3 ls
+        run: |
+          aws s3 ls
