@@ -37,6 +37,7 @@ jobs:
     permissions:
       contents: "read"
       id-token: "write"
+      pull-requests: "write"
     steps:
       - name: Checkout
         uses: actions/checkout@v5
@@ -54,15 +55,12 @@ jobs:
       - run: |
           bun install
 
-      - name: s3 ls
-        run: |
-          aws s3 ls
-      - name: Pulumi login
-        run: |
-          pulumi login s3://gm2dev-pulumi-state
-      - name: Pulumi stack select
-        run: |
-          pulumi stack select dev
-      - name: Pulumi preview
-        run: |
-          bun run pulumi preview
+      - name: Pulumi Preview
+        uses: pulumi/actions@v6
+        with:
+          command: preview
+          stack-name: dev
+          comment-on-pr: true
+          comment-on-summary: true
+        env:
+          PULUMI_BACKEND_URL: s3://gm2dev-pulumi-state
