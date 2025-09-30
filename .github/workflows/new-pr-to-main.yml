@@ -62,7 +62,7 @@ jobs:
           echo $PATH
           which node
           brew install pulumi
-          brew install nodejs
+          #brew install nodejs
           bunx pulumi preview
       - name: Pulumi Preview
         uses: pulumi/actions@v6
@@ -72,5 +72,4 @@ jobs:
           stack-name: dev
           comment-on-pr: true
           comment-on-summary: true
-        env:
-          PULUMI_BACKEND_URL: s3://gm2dev-pulumi-state
+          cloud-url: s3://gm2dev-pulumi-state
