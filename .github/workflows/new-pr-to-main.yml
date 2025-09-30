@@ -57,8 +57,12 @@ jobs:
       - name: s3 ls
         run: |
           aws s3 ls
-      - name: Pulumi
+      - name: Pulumi login
         run: |
           pulumi login s3://gm2dev-pulumi-state
+      - name: Pulumi stack select
+        run: |
           pulumi stack select dev
+      - name: Pulumi preview
+        run: |
           pulumi preview
