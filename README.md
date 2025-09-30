@@ -32,8 +32,6 @@ brew install mise
 
 ### Recursos creados a "mano"
 
-_<small>primero la trampa, después el queso</small>_
-
 - La activación de identity center en la región de us-east-2
 
 - Cuenta **admin** para `jorge.clavijo@gm2dev.com`:
