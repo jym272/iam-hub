@@ -3,6 +3,8 @@
 import { teamResourcesWithBudgets } from "./budget/index.ts";
 export * from "./iam/index.ts";
 import { teamMembersWithBudgets } from "./members.ts";
+import { createGitHubOIDCProvider } from "./identity-provider/index.ts";
+import { githubOIDCConfig } from "./identity-provider/config.ts";
 
 export const budgetSummary = teamResourcesWithBudgets.map(({ /*userBudget,*/ memberConfig }) => ({
   username: memberConfig.username,
@@ -31,14 +33,20 @@ export const consoleAccess = teamResourcesWithBudgets
 
 export const totalTeamBudget = teamMembersWithBudgets.reduce((sum, member) => sum + member.monthlyBudgetUSD, 0);
 
+// GitHub OIDC Identity Provider for GitHub Actions
+const githubOIDC = createGitHubOIDCProvider(githubOIDCConfig);
+
+export const githubOIDCProviderArn = githubOIDC.providerArn;
+export const githubActionsRoleArns = githubOIDC.roleArns;
+
 // export const dashboardUrl = pulumi.interpolate`https://console.aws.amazon.com/cloudwatch/home?region=us-east-1#dashboards:name=${costDashboard.dashboardName}`;
 
 console.table({
-  ...budgetSummary,
+  // ...budgetSummary,
 });
 
 console.table({
-  totalTeamBudget,
+  // totalTeamBudget,
   // costTrackingTags,
   // dashboardUrl,
 });
