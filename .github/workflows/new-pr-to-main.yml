@@ -52,13 +52,14 @@ jobs:
         with:
           bun-version: "latest"
 
-      - run: |
-          bun install
+      - name: Install dependencies
+        run: bun install
 
       - name: Pulumi Preview
         uses: pulumi/actions@v6
         with:
           command: preview
+          pulumi-version: latest
           stack-name: dev
           comment-on-pr: true
           comment-on-summary: true
