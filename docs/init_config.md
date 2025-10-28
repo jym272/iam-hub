@@ -1,3 +1,5 @@
+> Al inicializar el proyecto, se crearon los siguientes recursos:
+
 ### Recursos creados a "mano"
 
 - La activación de identity center en la región de us-east-2
