@@ -1,5 +1,6 @@
 # Configuration values for the 'dev' stack
 config:
   aws:region: sa-east-1
+  aws:profile: sandbox-gm2dev
 secretsprovider: awskms://alias/pulumi-secrets?region=sa-east-1
 encryptedkey: AQICAHjOrSScsZM+41LE+WlsJw/NeezJT3/7Q97cDOU309bNigF1JhQa2WG0SobPAm4vMLnVAAAAfjB8BgkqhkiG9w0BBwagbzBtAgEAMGgGCSqGSIb3DQEHATAeBglghkgBZQMEAS4wEQQMmsUvUWPjcr7MRyEkAgEQgDtHrEMX3bZXGDULCf4k+8hV7oQJYcsldAt1cKtfklRK46x9xwVXpa157JVfEMoYcUus/yoapyl3/cyiwA==
