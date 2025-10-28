@@ -31,6 +31,10 @@ brew install pulumi
 ### Pulumi
 
 ```shell
+# Revisar permisos de aws
+aws sts get-caller-identity
+# Debería encontrarse el bucket del state de pulumi "gm2dev-pulumi-state"
+aws s3 ls
 # Inicializar proyecto
 pulumi login s3://gm2dev-pulumi-state
 # Revisar cambios
