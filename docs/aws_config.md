@@ -36,10 +36,8 @@ aws-ctx
 
 ### Configuración de `~/.aws/config`
 
-Agregar la siguiente config al archivo de aws, luego en este proyecto usar `aws-ctx` para cambiar de contexto.
-
-`sandbox-gm2dev` es un nombre sugerido, puede ser cambiado por cualquier otro. La región es importante, la infra por defecto de este
-proyecto se encuentra en `sa-east-1`.
+Agregar la siguiente config al archivo de aws, luego en el terminal usar `aws-ctx` para cambiar de
+contexto dentro de este proyecto.
 
 ```ini
 [profile sandbox-gm2dev]
@@ -47,3 +45,6 @@ aws_access_key_id = AKIA**************
 aws_secret_access_key = ztJb**************************
 region = sa-east-1
 ```
+
+`sandbox-gm2dev` es un nombre sugerido, puede ser cambiado por cualquier otro. La región es importante, la infra por defecto de este
+proyecto se encuentra en `sa-east-1`.
