@@ -6,6 +6,7 @@ import { githubOIDCConfig } from "./identity-provider/config.ts";
 import { createKms } from "./kms.ts";
 // import { pulumiSecretsKey, pulumiSecretsAlias } from "./kms.ts";
 
+// eslint-disable-next-line @typescript-eslint/no-unused-vars -- porque no interesa este output por ahora
 const budgetSummary = teamResourcesWithBudgets.map(({ /*userBudget,*/ memberConfig }) => ({
   username: memberConfig.username,
   monthlyBudget: memberConfig.monthlyBudgetUSD,
@@ -13,7 +14,7 @@ const budgetSummary = teamResourcesWithBudgets.map(({ /*userBudget,*/ memberConf
   services: memberConfig.services,
 }));
 
-const userCredentials = teamResourcesWithBudgets
+export const userCredentials = teamResourcesWithBudgets
   .filter(({ accessKey }) => accessKey)
   .map(({ accessKey, memberConfig }) => ({
     username: memberConfig.username,
@@ -21,7 +22,7 @@ const userCredentials = teamResourcesWithBudgets
     secretAccessKey: accessKey!.secret,
   }));
 
-const consoleAccess = teamResourcesWithBudgets
+export const consoleAccess = teamResourcesWithBudgets
   .filter(({ loginProfile }) => loginProfile)
   .map(({ loginProfile, memberConfig }) => ({
     username: memberConfig.username,
@@ -31,6 +32,7 @@ const consoleAccess = teamResourcesWithBudgets
     consoleLoginUrl: "https://309237749333.signin.aws.amazon.com/console",
   }));
 
+// eslint-disable-next-line @typescript-eslint/no-unused-vars -- porque no interesa este output por ahora
 const totalTeamBudget = teamMembersWithBudgets.reduce((sum, member) => sum + member.monthlyBudgetUSD, 0);
 
 // GitHub OIDC Identity Provider for GitHub Actions
@@ -42,9 +44,9 @@ createKms();
 //  const dashboardUrl = pulumi.interpolate`https://console.aws.amazon.com/cloudwatch/home?region=us-east-1#dashboards:name=${costDashboard.dashboardName}`;
 
 // Hasta un mejor refactor, esto servirá, TODO: hacer algo similar a sst
-console.table({
-  totalTeamBudget,
-  consoleAccess,
-  userCredentials,
-  budgetSummary,
-});
+// console.table({
+//   totalTeamBudget,
+//   consoleAccess,
+//   userCredentials,
+//   budgetSummary,
+// });

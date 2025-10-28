@@ -43,6 +43,19 @@ export const teamMembersWithBudgets: TeamMemberWithBudget[] = [
   //   }
   // },
   {
+    username: "santiago-lecuona",
+    services: ["admin", "iamRestriction", "instancesRestriction"],
+    regions: [],
+    monthlyBudgetUSD: 200, // $200/month for serverless dev
+    needsConsoleAccess: true,
+    needsAccessKey: true,
+    budgetAlerts: {
+      warningThreshold: 85,
+      criticalThreshold: 100,
+      emails: ["santiago.lecuona@gm2dev.com"],
+    },
+  },
+  {
     username: "maria-gonzalez",
     services: ["admin", "iamRestriction", "instancesRestriction"],
     regions: ["sa-east-1"], // Restrict to South America region
