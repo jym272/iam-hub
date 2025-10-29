@@ -37,6 +37,8 @@ aws sts get-caller-identity
 aws s3 ls
 # Inicializar proyecto
 pulumi login s3://gm2dev-pulumi-state
+# Seleccionar el stack explícitamente (recomendado)
+pulumi stack select dev
 # Revisar cambios
 pulumi preview
 # Deployar
