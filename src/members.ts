@@ -44,7 +44,7 @@ export const teamMembersWithBudgets: TeamMemberWithBudget[] = [
   // },
   {
     username: "santiago-lecuona",
-    services: ["admin", "iamRestriction", "instancesRestriction"],
+    services: ["admin"],
     regions: [],
     monthlyBudgetUSD: 200, // $200/month for serverless dev
     needsConsoleAccess: true,
