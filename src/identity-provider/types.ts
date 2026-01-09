@@ -7,6 +7,11 @@
 import * as pulumi from "@pulumi/pulumi";
 
 /**
+ * Non-empty array type - ensures at least one element at compile time
+ */
+export type NonEmptyArray<T> = [T, ...T[]];
+
+/**
  * Configuration for a GitHub Actions IAM role
  */
 export interface GitHubActionsRoleConfig {
@@ -21,18 +26,18 @@ export interface GitHubActionsRoleConfig {
   description: string;
 
   /**
-   * List of AWS managed or custom IAM policy ARNs/names to attach
+   * List of AWS managed or custom IAM policy ARNs/names to attach (must have at least one)
    * - AWS managed: "AmazonEC2ContainerRegistryPowerUser" or full ARN
    * - Custom managed: Must be full ARN starting with "arn:"
    */
-  policies: string[];
+  policies: NonEmptyArray<string>;
 
   /**
-   * List of GitHub repository names (without org prefix)
+   * List of GitHub repository names (without org prefix, must have at least one)
    * Format: "repository-name"
    * Will be expanded to: "repo:{org}/{repo}:*"
    */
-  repositories: string[];
+  repositories: NonEmptyArray<string>;
 }
 
 /**
@@ -45,13 +50,29 @@ export interface GitHubOIDCProviderConfig {
   githubOrganization: string;
 
   /**
-   * List of IAM roles to create with their configurations
+   * List of IAM roles to create with their configurations (must have at least one)
    */
-  roles: GitHubActionsRoleConfig[];
+  roles: NonEmptyArray<GitHubActionsRoleConfig>;
 
   /**
    * Optional custom tags for the OIDC provider
    * @default { motive: "For use in GitHub Actions" }
+   */
+  providerTags?: Record<string, string>;
+}
+
+/**
+ * Multi-organization configuration for GitHub OIDC
+ * Allows multiple GitHub organizations to share a single OIDC provider
+ */
+export interface GitHubOIDCMultiOrgConfig {
+  /**
+   * Array of organization-specific configurations (must have at least one)
+   */
+  organizations: NonEmptyArray<GitHubOIDCProviderConfig>;
+
+  /**
+   * Shared tags for the OIDC provider
    */
   providerTags?: Record<string, string>;
 }
