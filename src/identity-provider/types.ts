@@ -57,6 +57,22 @@ export interface GitHubOIDCProviderConfig {
 }
 
 /**
+ * Multi-organization configuration for GitHub OIDC
+ * Allows multiple GitHub organizations to share a single OIDC provider
+ */
+export interface GitHubOIDCMultiOrgConfig {
+  /**
+   * Array of organization-specific configurations
+   */
+  organizations: GitHubOIDCProviderConfig[];
+
+  /**
+   * Shared tags for the OIDC provider
+   */
+  providerTags?: Record<string, string>;
+}
+
+/**
  * Outputs from the GitHub OIDC Identity Provider module
  */
 export interface GitHubOIDCProviderOutputs {
